@@ -18,12 +18,14 @@ def create_con():
     return con, cursor
 
 
-def passwd_hasher(passwd: str) -> str: ...
+def passwd_hasher(passwd: str) -> str:
+    return passwd
+
 
 # @brief This checks if the given test string matches the given patter.
 # @param test: str The string to test for matching.
 # @param regex_pattern: re.Pattern The pattern that the test is to be matched against.
-# @return bool: True if it matches else False. 
+# @return bool: True if it matches else False.
 def verify_regex(test: str, regex_pattern: re.Pattern) -> bool:
     is_matched = regex_pattern.search(test)
     # We check if the email matched and
@@ -36,10 +38,10 @@ def verify_regex(test: str, regex_pattern: re.Pattern) -> bool:
 # @brief This prompts the user to input a valid phone number for account creation.
 # @return int: The user inputted valid phone number.
 def get_ph_no() -> int:
-    ph_no = input("Enter Phone Number to create the account: ")
+    ph_no = input("Enter Phone Number to create the account: ").strip()
     while not ph_no.isnumeric():
         print("Enter a valid phone number")
-        ph_no = input("Enter Phone Number to create the account: ")
+        ph_no = input("Enter Phone Number to create the account: ").strip()
     ph_no = int(ph_no)
     while ph_no < 1000000000 or ph_no > 9999999999:  # type: ignore
         print("Enter a valid phone number")
@@ -52,10 +54,10 @@ def get_ph_no() -> int:
 # @return str: The user inputted valid email address.
 def get_email(email_regex: re.Pattern) -> str:
     # Verifying if the email is valid using regex pattern matching.
-    email = input("Enter the email: ")
+    email = input("Enter the email: ").strip()
     while len(email) > 1024 or not verify_regex(test=email, regex_pattern=email_regex):
         print("Please enter a valid email/ Email too large to be supported")
-        email = input("Enter the email: ")
+        email = input("Enter the email: ").strip()
     return email
 
 
@@ -63,12 +65,12 @@ def get_email(email_regex: re.Pattern) -> str:
 # @return The encrypted passwd hash.
 def get_passwd() -> str:
     # Getting a passwd and hashing it for security.
-    passwd = input("Enter a strong passwd for your account: ")
-    confirm = input("Please confirm the passwd: ")
+    passwd = input("Enter a strong passwd for your account: ").strip()
+    confirm = input("Please confirm the passwd: ").strip()
     while passwd != confirm:
         print("The passwd and confirmation don't match up, Please check")
-        passwd = input("Enter a strong passwd for your account: ")
-        confirm = input("Please confirm the passwd: ")
+        passwd = input("Enter a strong passwd for your account: ").strip()
+        confirm = input("Please confirm the passwd: ").strip()
     confirm = ""
     return passwd_hasher(passwd=passwd)
 
@@ -77,18 +79,30 @@ def get_passwd() -> str:
 # @param u_name: re.Pattern The regex pattern to match the u_name against.
 # @param cursor: SQL_CURSOR The cursor object to the database having login table.
 def get_u_name(u_name_regex: re.Pattern, cursor) -> str:
-    u_name = input("Please enter your desired uname: ")
+    u_name = input("Please enter your desired uname: ").strip()
     exist_query = f"SELECT * FROM login WHERE u_name = '{u_name}'"
     # We check if the username contains anything else than alphabets and digits and it is not currently used by someone else.
-    already_exist = bool(cursor.execute(exist_query).fetchall())
+    cursor.execute(exist_query)
+    already_exist = bool(cursor.fetchall())
     while not verify_regex(u_name, u_name_regex) or already_exist:
         print(
             "Enter a username with only alphabets and numbers OR u_name already exists."
         )
-        u_name = input("Please enter your desired uname: ")
+        u_name = input("Please enter your desired uname: ").strip()
         exist_query = f"SELECT * FROM login WHERE u_name = '{u_name}'"
-        already_exist = bool(cursor.execute(exist_query).fetchall())
+        cursor.execute(exist_query)
+        already_exist = bool(cursor.fetchall())
     return u_name
+
+
+# @brief This prompts the user to input the level of access this account will have.
+# @return str: The access level "STU" OR "TEACH" OR "ADMIN".
+def get_access_level()->str:
+    access_level = input("Enter the access level for this account STU/TEACH/ADMIN: ")
+    if access_level not in ["STU", "TEACH", "ADMIN"]: 
+        print("Enter a valid access level.")
+        access_level = input("Enter the access level for this account STU/TEACH/ADMIN: ")
+    return access_level
 
 
 def create_account(
@@ -98,6 +112,11 @@ def create_account(
     email = get_email(email_regex=email_regex)
     passwd = get_passwd()
     u_name = get_u_name(u_name_regex=u_name_regex, cursor=cursor)
+    # TODO: Make a level of verification for this access control.
+    access_level = get_access_level()
+    query = f"INSERT INTO login VALUES('{email}', '{passwd}', '{u_name}', '{access_level}', {ph_no})"
+    cursor.execute(query)
+    con.commit()
 
 
 def main() -> None:
