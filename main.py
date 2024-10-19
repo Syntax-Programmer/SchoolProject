@@ -19,6 +19,7 @@ def create_con():
 
 
 def passwd_hasher(passwd: str) -> str:
+    # TODO: Implement this function.
     return passwd
 
 
@@ -78,13 +79,13 @@ def get_passwd() -> str:
 # @brief This prompts the user to input a valid u_name that does not exist already.
 # @param u_name: re.Pattern The regex pattern to match the u_name against.
 # @param cursor: SQL_CURSOR The cursor object to the database having login table.
-def get_u_name(u_name_regex: re.Pattern, cursor) -> str:
+def get_u_name(cursor) -> str:
     u_name = input("Please enter your desired uname: ").strip()
     exist_query = f"SELECT * FROM login WHERE u_name = '{u_name}'"
     # We check if the username contains anything else than alphabets and digits and it is not currently used by someone else.
     cursor.execute(exist_query)
     already_exist = bool(cursor.fetchall())
-    while not verify_regex(u_name, u_name_regex) or already_exist:
+    while not u_name.isalnum() or already_exist:
         print(
             "Enter a username with only alphabets and numbers OR u_name already exists."
         )
@@ -106,12 +107,12 @@ def get_access_level()->str:
 
 
 def create_account(
-    email_regex: re.Pattern, u_name_regex: re.Pattern, con, cursor
+    email_regex: re.Pattern, con, cursor
 ) -> None:
     ph_no = get_ph_no()
     email = get_email(email_regex=email_regex)
     passwd = get_passwd()
-    u_name = get_u_name(u_name_regex=u_name_regex, cursor=cursor)
+    u_name = get_u_name(cursor=cursor)
     # TODO: Make a level of verification for this access control.
     access_level = get_access_level()
     query = f"INSERT INTO login VALUES('{email}', '{passwd}', '{u_name}', '{access_level}', {ph_no})"
@@ -124,10 +125,8 @@ def main() -> None:
     # We compile the pattern to improve performance during repeated use.
     email_pattern = r"^[\w.-]+@([\w-]+\.)+[\w]{2,4}$"
     email_regex = re.compile(email_pattern)
-    u_name_pattern = r"[A-Za-z\d]+"
-    u_name_regex = re.compile(u_name_pattern)
     create_account(
-        email_regex=email_regex, u_name_regex=u_name_regex, con=con, cursor=cursor
+        email_regex=email_regex, con=con, cursor=cursor
     )
 
 
