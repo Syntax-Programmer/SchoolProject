@@ -1,0 +1,32 @@
+MYSQL tables: 
+
+
+=========LOGIN=========
+
+SQL command to create:
+----------------------
+    CREATE TABLE login (
+    ->  email varchar(1024) NOT NULL,
+    ->  passwd_hash varchar(32) NOT NULL,
+    ->  u_name varchar(50) NOT NULL PRIMARY KEY,
+    ->  access_lvl enum("STU", "TEACH", "ADMIN") NOT NULL
+    ->  ph_no BIGINT NOT NULL,
+    ->  );
+
+Table Structure:
+----------------
++-------------+------------------------------+------+-----+---------+-------+
+| Field       | Type                         | Null | Key | Default | Extra |
++-------------+------------------------------+------+-----+---------+-------+
+| email       | varchar(1024)                | NO   |     | NULL    |       |
+| passwd_hash | varchar(32)                  | NO   |     | NULL    |       |
+| u_name      | varchar(50)                  | NO   | PRI | NULL    |       |
+| access_lvl  | enum('STU','TEACH','ADMIN')  | NO   |     | NULL    |       |
+| ph_no       | bigint(20)                   | NO   |     | NULL    |       |
++-------------+------------------------------+------+-----+---------+-------+
+
+passwd_hash is the SHA256 hash of the user passwd to make sure that it is secure.
+By using u_name as a primary key, we make sure that username of all the people remain unique.
+ph_no uses BIGINT and not INT as ph no can be larger than the limit of the INT = 2 ^ 32
+
+========= =========
