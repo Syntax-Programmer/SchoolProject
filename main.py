@@ -1,6 +1,6 @@
 import re  # Used to match patterns
 import mysql.connector as sqltor
-
+import hashlib
 
 # @brief This creates the initial connection with the required database.
 # @return The connection and cursor object.
@@ -18,9 +18,13 @@ def create_con():
     return con, cursor
 
 
+# @brief This creates the passwd hash using sha512 hashing algorithm
+# @param passwd: str The password to hash.
+# @return str: The 128 bytes passwd hash.
 def passwd_hasher(passwd: str) -> str:
-    # TODO: Implement this function.
-    return passwd
+    sha512 = hashlib.sha512()
+    sha512.update(passwd.encode("utf-8"))
+    return sha512.hexdigest()
 
 
 # @brief This checks if the given test string matches the given patter.
