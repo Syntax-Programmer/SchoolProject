@@ -7,7 +7,7 @@ SQL command to create:
 ----------------------
     CREATE TABLE login (
     ->  email varchar(1024) NOT NULL,
-    ->  passwd_hash varchar(32) NOT NULL,
+    ->  passwd_hash varchar(128) NOT NULL,
     ->  u_name varchar(50) NOT NULL PRIMARY KEY,
     ->  access_lvl enum("STU", "TEACH", "ADMIN") NOT NULL
     ->  ph_no BIGINT NOT NULL,
@@ -19,7 +19,7 @@ Table Structure:
 | Field       | Type                         | Null | Key | Default | Extra |
 +-------------+------------------------------+------+-----+---------+-------+
 | email       | varchar(1024)                | NO   |     | NULL    |       |
-| passwd_hash | varchar(32)                  | NO   |     | NULL    |       |
+| passwd_hash | varchar(128)                 | NO   |     | NULL    |       |
 | u_name      | varchar(50)                  | NO   | PRI | NULL    |       |
 | access_lvl  | enum('STU','TEACH','ADMIN')  | NO   |     | NULL    |       |
 | ph_no       | bigint(20)                   | NO   |     | NULL    |       |
