@@ -152,6 +152,7 @@ def get_access_level() -> str:
 # @param con: SQL_CONNECTION The connection object of the SchoolProject database.
 # @param cursor: SQL_CURSOR The cursor object to the database having login table.
 def create_account(email_regex: re.Pattern, con, cursor) -> None:
+    clear_screen()
     print("\n\033[93m===============ACCOUNT CREATION===============\033[0m\n")
     ph_no = get_ph_no()
     email = get_email(email_regex=email_regex)
@@ -162,6 +163,42 @@ def create_account(email_regex: re.Pattern, con, cursor) -> None:
     query = f"INSERT INTO login(email, passwd_hash, u_name, access_lvl, ph_no) VALUES('{email}', '{passwd}', '{u_name}', '{access_level}', {ph_no})"
     cursor.execute(query)
     con.commit()
+    print("\n\033[92mYour account creation request has been sent to our moderators, They will respond back to you in 2-3 business days. THANK YOU\033[0m\n")
+
+
+# @brief This returns appropriate number depicting if the login was successful.
+# @param cursor: SQL_CURSOR The cursor object to the database having login table.
+# @return int: -1: For invalid, 0: Student, 1: Teacher, 2: Admin
+def login(cursor)->int:
+    # We define:
+    # -1 : Invalid login
+    # 0 : Student
+    # 1 : Teacher
+    # 2 : Admin
+    clear_screen()
+    print("\n\033[93m===============LOGIN WINDOW===============\033[0m\n")
+    u_name = input("Enter the username of the account you want to log in: ").strip()
+    passwd = input("Enter the password to the account.")
+    passwd = passwd_hasher(passwd=passwd)
+    query = f"SELECT access_lvl, is_verified FROM login WHERE u_name = '{u_name}' AND passwd_hash = '{passwd}';"
+    cursor.execute(query)
+    if_exist = cursor.fetchall()
+    if if_exist:
+        if if_exist[0][1] == 1:
+            if if_exist[0][0] == "STU":
+                return 0
+            elif if_exist[0][0] == "TEACH":
+                return 1
+            else:
+                return 2
+        else:
+            print("\033[91mYour account has sadly not been verified yet by our admins, SORRY.\033[0m")
+            return -1
+    else:
+        print(
+            "\033[91mWrong username or password. Please check\033[0m"
+        )
+        return -1
 
 
 def main() -> None:
@@ -170,7 +207,11 @@ def main() -> None:
     # We compile the pattern to improve performance during repeated use.
     email_pattern = r"^[\w.-]+@([\w-]+\.)+[\w]{2,4}$"
     email_regex = re.compile(email_pattern)
-    create_account(email_regex=email_regex, con=con, cursor=cursor)
+    print(login(cursor))
+
+#! Sanitize input to prevent sql injection.
+#! Make somewhat of a loop to prompt user to re login if invalid.
+#! MAKE A METHOD FOR USER TO EXIT A PROCESS LIKE, CREATE ACCOUNT OR LOGIN mid way.
 
 
 if __name__ == "__main__":
