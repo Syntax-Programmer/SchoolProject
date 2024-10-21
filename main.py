@@ -132,12 +132,18 @@ def get_u_name(cursor) -> str:
 # @return str: The access level "STU" OR "TEACH" OR "ADMIN".
 def get_access_level() -> str:
     print("\n\033[94m===============ACCESS LEVEL===============\033[0m\n")
-    access_level = input("Enter the access level for this account STU/TEACH/ADMIN: ").strip().lower()
+    access_level = (
+        input("Enter the access level for this account STU/TEACH/ADMIN: ")
+        .strip()
+        .upper()
+    )
     if access_level not in ["STU", "TEACH", "ADMIN"]:
         print("\033[91mEnter a valid access level.\033[0m")
-        access_level = input(
-            "Enter the access level for this account STU/TEACH/ADMIN: "
-        ).strip().lower()
+        access_level = (
+            input("Enter the access level for this account STU/TEACH/ADMIN: ")
+            .strip()
+            .upper()
+        )
     return access_level
 
 
@@ -153,7 +159,7 @@ def create_account(email_regex: re.Pattern, con, cursor) -> None:
     u_name = get_u_name(cursor=cursor)
     # TODO: Make a level of verification for this access control.
     access_level = get_access_level()
-    query = f"INSERT INTO login VALUES('{email}', '{passwd}', '{u_name}', '{access_level}', {ph_no})"
+    query = f"INSERT INTO login(email, passwd_hash, u_name, access_lvl, ph_no) VALUES('{email}', '{passwd}', '{u_name}', '{access_level}', {ph_no})"
     cursor.execute(query)
     con.commit()
 
