@@ -123,11 +123,21 @@ def input_username(username_regex: re.Pattern) -> str:
 
 
 def input_passwd() -> str:
-    pass
+    passwd = input("\033[2m\033[1m Enter a secure passwd: \033[0m")
+    confirm = input("\033[2m\033[1m Enter confirmation for passwd: \033[0m")
+    while len(passwd) < 5 or passwd != confirm:
+        print("\033[41m Passwd too short or passwd doesn't match confirmation. \033[0m")
+        passwd = input("\033[2m\033[1m Enter a secure passwd: \033[0m")
+        confirm = input("\033[2m\033[1m Enter confirmation for passwd: \033[0m")
+    return passwd_hasher(passwd)
 
 
-def input_email() -> str:
-    pass
+def input_email(email_regex: re.Pattern) -> str:
+    email = input("\033[2m\033[1m Enter email for account creation: \033[0m")
+    while not verify_regex(email, email_regex) or len(email) < 15 or len(email) > 1024:
+        print("\033[41m Enter a valid email of length 15 - 1024. \033[0m")
+        email = input("E\033[2m\033[1m Enter email for account creation: \033[0m")
+    return email
 
 
 def input_ph_no() -> int:
