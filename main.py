@@ -159,7 +159,13 @@ def input_access() -> int:
         )
     return int(access)
 
-def create_account() -> None:
+def create_account(username_regex: re.Pattern, email_regex: re.Pattern, cursor, con) -> None:
+    username = input_username(username_regex=username_regex)
+    email = input_email(email_regex=email_regex)
+    passwd = input_passwd()
+    ph_no = input_ph_no()
+    access = input_access()
+    create_query = f"INSERT INTO LoginData VALUES('{username}', '{passwd}', '{email}', {ph_no}, {access})"
     print(
         "\n\033[92m\033[1m\033[3m\033[4m Your query has been accepted, your account will be verified in a few days. \033[0m\n"
     )
