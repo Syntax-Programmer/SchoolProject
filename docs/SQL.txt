@@ -1,0 +1,39 @@
+MYSQL tables: 
+
+
+=========LoginData=========
+
+SQL command to create:
+----------------------
+    CREATE TABLE LoginData (
+    -> username varchar(50) NOT NULL PRIMARY KEY,
+    -> passwd varchar(128) NOT NULL,
+    -> email varchar(1024) NOT NULL,
+    -> ph_no BIGINT NOT NULL,
+    -> access TINYINT NOT NULL,
+    -> verified TINYINT NOT NULL DEFAULT 0);
+
+
+Table Structure:
+----------------
++----------+---------------+------+-----+---------+-------+
+| Field    | Type          | Null | Key | Default | Extra |
++----------+---------------+------+-----+---------+-------+
+| username | varchar(50)   | NO   | PRI | NULL    |       |
+| passwd   | varchar(128)  | NO   |     | NULL    |       |
+| email    | varchar(1024) | NO   |     | NULL    |       |
+| ph_no    | bigint(20)    | NO   |     | NULL    |       |
+| access   | tinyint(4)    | NO   |     | NULL    |       |
+| verified | tinyint(4)    | NO   |     | 0       |       |
++----------+---------------+------+-----+---------+-------+
+
+Remarks:
+--------
+1. passwd_hash is the SHA512 hash of the user passwd to make sure that it is secure.
+2. By using username as a primary key, we make sure that username of all the people remain unique.
+3. ph_no uses BIGINT and not INT as ph no can be larger than the limit of the INT = 2 ^ 32
+4. The verified tag tells if the user account is verified by admins to check validity and maintain integrity.
+
+========= =========
+
+NOTE: ENABLE ON UPDATE CASCADE AND ON DELETE CASCADE FOR FOREIGN TABLES
