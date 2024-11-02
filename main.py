@@ -131,12 +131,23 @@ def input_email() -> str:
 
 
 def input_ph_no() -> int:
-    pass
+    ph_no = input("\033[2m\033[1m enter the ph_no \033[0m")
+    while len(ph_no) != 10 or ph_no.isdigit():
+        print("\033[41m Enter the valid ph_no\033[0m")
+        ph_no = input("\033[2m\033[1m enter the ph_no \033[0m")
+    return int(ph_no)
 
 
 def input_access() -> int:
-    pass
-
+    access = input(
+        "\033[2m\033[1m enter access level 0 for student,1 for teacher,2 for admin \033[0m:"
+    )
+    while access not in ("0", "1", "2"):
+        print("\033[41m Enter from the mentioned above access levels only \033[0m")
+        access = input(
+            "\033[2m\033[1m enter access level 0 for student,1 for teacher,2 for admin \033[0m"
+        )
+    return int(access)
 
 def create_account() -> None:
     print(
