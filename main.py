@@ -190,6 +190,13 @@ def input_access() -> int:
 def create_account(
     username_regex: re.Pattern, email_regex: re.Pattern, cursor, con
 ) -> None:
+    """
+    @brief This allows the user to make a new account(unverified).
+    @param username_regex: re.Pattern The regex pattern to verify username against.
+    @param email_regex: re.Pattern The regex pattern to verify email against.
+    @param con: Connection_OBJ The connection object to the SchoolProject database.
+    @param cursor: Cursor_OBJ The cursor object to the SchoolProject database.
+    """
     while True:
         username = input_username(username_regex=username_regex)
         email = input_email(email_regex=email_regex)
