@@ -109,7 +109,13 @@ def verify_regex(test: str, regex_pattern: re.Pattern) -> bool:
 
 
 def input_username(username_regex: re.Pattern) -> str:
+    """
+    @brief This prompts the user to input username for account creation.
+    @param username_regex: re.Pattern The regex pattern to check for validity of the username.
+    @return str: The valid username chosen by the user.
+    """
     username = input("\033[2m\033[1m Enter the user name: \033[0m")
+    # We prompt the user  to keep inputting the data till their input is valid.
     while (
         len(username) > 50
         or len(username) < 5
@@ -123,8 +129,13 @@ def input_username(username_regex: re.Pattern) -> str:
 
 
 def input_passwd() -> str:
+    """
+    @brief This prompts the user to create a passwd for their new account.
+    @return The sha512 encrypted hash of the password.
+    """
     passwd = input("\033[2m\033[1m Enter a secure passwd: \033[0m")
     confirm = input("\033[2m\033[1m Enter confirmation for passwd: \033[0m")
+    # We prompt the user  to keep inputting the data till their input is valid.
     while len(passwd) < 5 or passwd != confirm:
         print("\033[41m Passwd too short or passwd doesn't match confirmation. \033[0m")
         passwd = input("\033[2m\033[1m Enter a secure passwd: \033[0m")
@@ -133,7 +144,13 @@ def input_passwd() -> str:
 
 
 def input_email(email_regex: re.Pattern) -> str:
+    """
+    @brief This prompts the user to set an email for their account.
+    @param email_regex: re.Pattern The regex pattern to check for the validity of the email.
+    @return str: The email set by the user.
+    """
     email = input("\033[2m\033[1m Enter email for account creation: \033[0m")
+    # We prompt the user  to keep inputting the data till their input is valid.
     while not verify_regex(email, email_regex) or len(email) < 15 or len(email) > 1024:
         print("\033[41m Enter a valid email of length 15 - 1024. \033[0m")
         email = input("E\033[2m\033[1m Enter email for account creation: \033[0m")
@@ -141,34 +158,65 @@ def input_email(email_regex: re.Pattern) -> str:
 
 
 def input_ph_no() -> int:
-    ph_no = input("\033[2m\033[1m enter the ph_no \033[0m")
-    while len(ph_no) != 10 or ph_no.isdigit():
-        print("\033[41m Enter the valid ph_no\033[0m")
-        ph_no = input("\033[2m\033[1m enter the ph_no \033[0m")
+    """
+    @brief This prompts the user to input a phone number for their account.
+    @return The phone number set by the user.
+    """
+    ph_no = input("\033[2m\033[1m Enter the phone number: \033[0m")
+    # We prompt the user  to keep inputting the data till their input is valid.
+    while len(ph_no) != 10 or not ph_no.isdigit():
+        print("\033[41m Phone number should be 10 digit long only. \033[0m")
+        ph_no = input("\033[2m\033[1m Enter the phone number: \033[0m")
     return int(ph_no)
 
 
 def input_access() -> int:
+    """
+    @brief This prompts user to enter the level of access this account will have(if verified by an admin).
+    @return The access level of the account, 0: For Student, 1: For Teacher, 3: For Admins.
+    """
     access = input(
-        "\033[2m\033[1m enter access level 0 for student,1 for teacher,2 for admin \033[0m:"
+        "\033[2m\033[1m Enter access level\n 0: Student\n 1: Teacher\n 2: Admin \033[0m:"
     )
+    # We prompt the user  to keep inputting the data till their input is valid.
     while access not in ("0", "1", "2"):
-        print("\033[41m Enter from the mentioned above access levels only \033[0m")
+        print("\033[41m Enter from the mentioned above access levels only. \033[0m")
         access = input(
-            "\033[2m\033[1m enter access level 0 for student,1 for teacher,2 for admin \033[0m"
+            "\033[2m\033[1m Enter access level\n 0: Student\n 1: Teacher\n 2: Admin \033[0m:"
         )
     return int(access)
 
-def create_account(username_regex: re.Pattern, email_regex: re.Pattern, cursor, con) -> None:
-    username = input_username(username_regex=username_regex)
-    email = input_email(email_regex=email_regex)
-    passwd = input_passwd()
-    ph_no = input_ph_no()
-    access = input_access()
-    create_query = f"INSERT INTO LoginData VALUES('{username}', '{passwd}', '{email}', {ph_no}, {access})"
+
+def create_account(
+    username_regex: re.Pattern, email_regex: re.Pattern, cursor, con
+) -> None:
+    while True:
+        username = input_username(username_regex=username_regex)
+        email = input_email(email_regex=email_regex)
+        passwd = input_passwd()
+        ph_no = input_ph_no()
+        access = input_access()
+        # Check if an account with the given username already exists.
+        fetch_query = f"SELECT username FROM LoginData WHERE username = '{username}'"
+        cursor.execute(fetch_query)
+        # If an account exists, fetchall() will return a non-empty list.
+        if cursor.fetchall():
+            print(
+                "\033[41m An account with the given username already exists. Please try again \033[0m"
+            )
+            continue  # Retry with a new username
+        # If no account exists, break out of the loop to create a new account
+        break
+
+    # Create an unverified account for the user.
+    create_query = f"INSERT INTO LoginData (username, passwd, email, ph_no, access) VALUES ('{username}', '{passwd}', '{email}', {ph_no}, {access})"
+    cursor.execute(create_query)
+    con.commit()
+
     print(
         "\n\033[92m\033[1m\033[3m\033[4m Your query has been accepted, your account will be verified in a few days. \033[0m\n"
     )
+
     # Waiting for the user to exit.
     input("\033[2m Enter any key to go back: \033[0m")
 
@@ -223,7 +271,12 @@ def main() -> None:
             continue
         clear_screen()
         if mode == "1":
-            create_account()
+            create_account(
+                username_regex=username_regex,
+                email_regex=email_regex,
+                cursor=cursor,
+                con=con,
+            )
         elif mode == "2":
             access = login()
             # To clear the screen for the account stuff.
