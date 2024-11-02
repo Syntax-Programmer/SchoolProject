@@ -1,37 +1,63 @@
-import re  # Used to match patterns.
-import mysql.connector as sqltor  # To connect to the MYSQL database.
-from hashlib import sha512  # Hashing algorithm for passwd storing.
-import os  # For clearing the screen.
+import re  # To match regex patterns.
+import mysql.connector as sqltor
+from hashlib import sha512
+import os
 
 
-# ANSI COLOR CODES are used to colorize the text being printed on the screen.
+# ANSI CODES are used to beautify the text being printed on the screen.
 # The following is the chart of color codes used.
 #
 # \033[91m: Red
 # \033[92m: Green
 # \033[93m: Yellow
 # \033[94m: Blue
+# \033[90m: Dark Gray
+# \033[95m: Magenta (Purple)
+# \033[96m: Cyan (Light Blue)
+# \033[97m: White
 # \033[0m: Reset (reverts to default terminal color)
+#
+# Background Colors:
+# \033[41m: Red Background
+# \033[42m: Green Background
+# \033[43m: Yellow Background
+# \033[44m: Blue Background
+# \033[45m: Magenta Background
+# \033[46m: Cyan Background
+# \033[47m: White Background
+# \033[40m: Black Background
+#
+# Some more codes:
+# \033[1m: Bold
+# \033[2m: Dim
+# \033[3m: Italic
+# \033[4m: Underline
+# \033[7m: Inverse (swap foreground and background colors)
+# \033[9m: Strikethrough
 
 
-# @brief This creates the initial connection with the required database.
-# @return The connection and cursor object.
 def create_con():
+    """
+    @brief This creates a connection to the SchoolProject database.
+    @return tuple[Connection_OBJ, Cursor_OBJ] A tuple of the connection and cursor object of the database.
+    """
     con = sqltor.connect(
         user="anand_maurya",
         passwd="ANAND6308anand",
         database="SchoolProject",
         host="localhost",
-        collation="utf8mb4_unicode_520_ci",  # ABHIJOT REMOVE THIS LINE FOR YOUR CODE, THIS HELPS ME ONLY AS I DONT USE WINDOWS OS.
+        collation="utf8mb4_unicode_520_ci",
     )
     if not con.is_connected():
-        print("\033[91mCan't connect to the database\033[0m")
+        raise ConnectionError("\033[91mCan't connect to the database\033[0m")
     cursor = con.cursor()
     return con, cursor
 
 
-# @brief Clears the terminal screen of any  previous content.
 def clear_screen() -> None:
+    """
+    @brief This clears the terminal screen of any content.
+    """
     # For Windows
     if os.name == "nt":
         os.system("cls")
@@ -40,20 +66,40 @@ def clear_screen() -> None:
         os.system("clear")
 
 
-# @brief This creates the passwd hash using sha512 hashing algorithm
-# @param passwd: str The password to hash.
-# @return str: The 128 bytes passwd hash.
 def passwd_hasher(passwd: str) -> str:
+    """
+    @brief This makes a sha512 hash of the given passwd.
+    @param passwd: str The passwd string.
+    @return str: The hashed passwd.
+    """
     sha512_obj = sha512()
     sha512_obj.update(passwd.encode("utf-8"))
     return sha512_obj.hexdigest()
 
 
-# @brief This checks if the given test string matches the given patter.
-# @param test: str The string to test for matching.
-# @param regex_pattern: re.Pattern The pattern that the test is to be matched against.
-# @return bool: True if it matches else False.
+def make_init_admin(con, cursor) -> None:
+    """
+    @brief This makes the creator of the program the initial admin, if their account doesn't exist.
+    @param con: Connection_OBJ The connection object to the SchoolProject database.
+    @param cursor: Cursor_OBJ The cursor object to the SchoolProject database.
+    """
+    passwd = passwd_hasher("ANAND66308anand")
+    fetch_query = "SELECT * FROM LoginData WHERE username = 'ADMIN_ANAND'"
+    make_query = f"INSERT INTO LoginData VALUES('ADMIN_ANAND', '{passwd}', 'admin@gmail.com', 911000000000, 2, 1)"
+    cursor.execute(fetch_query)
+    # If the u_name doesn't exist then we create one
+    if not cursor.fetchall():
+        cursor.execute(make_query)
+        con.commit()
+
+
 def verify_regex(test: str, regex_pattern: re.Pattern) -> bool:
+    """
+    @brief This checks if the given test string matches the given pattern.
+    @param test: str The string to test for matching.
+    @param regex_pattern: re.Pattern The pattern that the test is to be matched against.
+    @return bool: True if it matches else False.
+    """
     is_matched = regex_pattern.search(test)
     # We check if the email matched and
     # if the string matched is the complete email string and not just the substring.
@@ -62,156 +108,109 @@ def verify_regex(test: str, regex_pattern: re.Pattern) -> bool:
     return False
 
 
-# @brief This prompts the user to input a valid phone number for account creation.
-# @return int: The user inputted valid phone number.
-def get_ph_no() -> int:
-    print("\n\033[94m===============PHONE NUMBER===============\033[0m\n")
-    ph_no = input("Enter Phone Number to create the account: ").strip()
-    while not ph_no.isnumeric():
-        print("\033[91mEnter a valid phone number\033[0m")
-        ph_no = input("Enter Phone Number to create the account: ").strip()
-    ph_no = int(ph_no)
-    while ph_no < 1000000000 or ph_no > 9999999999:  # type: ignore
-        print("\033[91mEnter a valid phone number\033[0m")
-        ph_no = input("Enter Phone Number to create the account: ")
-    return ph_no  # type: ignore
-
-
-# @brief This prompts the user to input a valid email for account creation.
-# @param email_regex: re.Pattern The email regex pattern to match the email against.
-# @return str: The user inputted valid email address.
-def get_email(email_regex: re.Pattern) -> str:
-    print("\n\033[94m===============EMAIL===============\033[0m\n")
-    # Verifying if the email is valid using regex pattern matching.
-    email = input("Enter the email: ").strip()
-    while len(email) > 1024 or not verify_regex(test=email, regex_pattern=email_regex):
+def input_username(username_regex: re.Pattern) -> str:
+    username = input("\033[2m\033[1m Enter the user name: \033[0m")
+    while (
+        len(username) > 50
+        or len(username) < 5
+        or not verify_regex(username, username_regex)
+    ):
         print(
-            "\033[91mPlease enter a valid email/ Email too large to be supported\033[0m"
+            "\033[41m Username should be 5 - 50 letter long with alphabet nums and _ are permitted, Try again \033[0m"
         )
-        email = input("Enter the email: ").strip()
-    return email
+        username = input("\033[2m\033[1m Enter the user name: \033[0m")
+    return username
 
 
-# @brief This prompts the user to input a valid password and secures it using sha256 encryption.
-# @return The encrypted passwd hash.
-def get_passwd() -> str:
-    print("\n\033[94m===============PASSWORD===============\033[0m\n")
-    # Getting a passwd and hashing it for security.
-    passwd = input("Enter a strong passwd for your account: ").strip()
-    confirm = input("Please confirm the passwd: ").strip()
-    while passwd != confirm:
-        print("\033[91mThe passwd and confirmation don't match up, Please check\033[0m")
-        passwd = input("Enter a strong passwd for your account: ").strip()
-        confirm = input("Please confirm the passwd: ").strip()
-    confirm = ""
-    return passwd_hasher(passwd=passwd)
+def input_passwd() -> str:
+    pass
 
 
-# @brief This prompts the user to input a valid u_name that does not exist already.
-# @param u_name: re.Pattern The regex pattern to match the u_name against.
-# @param cursor: SQL_CURSOR The cursor object to the database having login table.
-def get_u_name(cursor) -> str:
-    print("\n\033[94m===============USER NAME===============\033[0m\n")
-    u_name = input("Please enter your desired uname: ").strip()
-    exist_query = f"SELECT * FROM login WHERE u_name = '{u_name}'"
-    # We check if the username contains anything else than alphabets and digits and it is not currently used by someone else.
-    cursor.execute(exist_query)
-    already_exist = cursor.fetchall()
-    while not u_name.isalnum() or already_exist:
-        print(
-            "\033[91mEnter a username with only alphabets and numbers OR u_name already exists.\033[0m"
-        )
-        u_name = input("Please enter your desired uname: ").strip()
-        exist_query = f"SELECT * FROM login WHERE u_name = '{u_name}'"
-        cursor.execute(exist_query)
-        already_exist = cursor.fetchall()
-    return u_name
+def input_email() -> str:
+    pass
 
 
-# @brief This prompts the user to input the level of access this account will have.
-# @return str: The access level "STU" OR "TEACH" OR "ADMIN".
-def get_access_level() -> str:
-    print("\n\033[94m===============ACCESS LEVEL===============\033[0m\n")
-    access_level = (
-        input("Enter the access level for this account STU/TEACH/ADMIN: ")
-        .strip()
-        .upper()
+def input_ph_no() -> int:
+    pass
+
+
+def input_access() -> int:
+    pass
+
+
+def create_account() -> None:
+    print(
+        "\n\033[92m\033[1m\033[3m\033[4m Your query has been accepted, your account will be verified in a few days. \033[0m\n"
     )
-    if access_level not in ["STU", "TEACH", "ADMIN"]:
-        print("\033[91mEnter a valid access level.\033[0m")
-        access_level = (
-            input("Enter the access level for this account STU/TEACH/ADMIN: ")
-            .strip()
-            .upper()
-        )
-    return access_level
+    # Waiting for the user to exit.
+    input("\033[2m Enter any key to go back: \033[0m")
 
 
-# @brief This creates an account of the user with a level of verification by the admin/teacher.
-# @param email_regex: re.Pattern The regex pattern that checks for valid email.
-# @param con: SQL_CONNECTION The connection object of the SchoolProject database.
-# @param cursor: SQL_CURSOR The cursor object to the database having login table.
-def create_account(email_regex: re.Pattern, con, cursor) -> None:
-    clear_screen()
-    print("\n\033[93m===============ACCOUNT CREATION===============\033[0m\n")
-    ph_no = get_ph_no()
-    email = get_email(email_regex=email_regex)
-    passwd = get_passwd()
-    u_name = get_u_name(cursor=cursor)
-    # TODO: Make a level of verification for this access control.
-    access_level = get_access_level()
-    query = f"INSERT INTO login(email, passwd_hash, u_name, access_lvl, ph_no) VALUES('{email}', '{passwd}', '{u_name}', '{access_level}', {ph_no})"
-    cursor.execute(query)
-    con.commit()
-    print("\n\033[92mYour account creation request has been sent to our moderators, They will respond back to you in 2-3 business days. THANK YOU\033[0m\n")
+def login() -> int:
+    # Access Levels:
+    # 0: Student
+    # 1: Teacher
+    # 2: Admin
+    access = 0
+    return access
 
 
-# @brief This returns appropriate number depicting if the login was successful.
-# @param cursor: SQL_CURSOR The cursor object to the database having login table.
-# @return int: -1: For invalid, 0: Student, 1: Teacher, 2: Admin
-def login(cursor)->int:
-    # We define:
-    # -1 : Invalid login
-    # 0 : Student
-    # 1 : Teacher
-    # 2 : Admin
-    clear_screen()
-    print("\n\033[93m===============LOGIN WINDOW===============\033[0m\n")
-    u_name = input("Enter the username of the account you want to log in: ").strip()
-    passwd = input("Enter the password to the account.")
-    passwd = passwd_hasher(passwd=passwd)
-    query = f"SELECT access_lvl, is_verified FROM login WHERE u_name = '{u_name}' AND passwd_hash = '{passwd}';"
-    cursor.execute(query)
-    if_exist = cursor.fetchall()
-    if if_exist:
-        if if_exist[0][1] == 1:
-            if if_exist[0][0] == "STU":
-                return 0
-            elif if_exist[0][0] == "TEACH":
-                return 1
-            else:
-                return 2
-        else:
-            print("\033[91mYour account has sadly not been verified yet by our admins, SORRY.\033[0m")
-            return -1
-    else:
-        print(
-            "\033[91mWrong username or password. Please check\033[0m"
-        )
-        return -1
+def student() -> None:
+    pass
+
+
+def teacher() -> None:
+    pass
+
+
+def admin() -> None:
+    pass
 
 
 def main() -> None:
-    clear_screen()
-    con, cursor = create_con()
+    """
+    @brief The main loop that runs the School ERP system.
+    """
+    mode = 0
+    access = 0
     # We compile the pattern to improve performance during repeated use.
     email_pattern = r"^[\w.-]+@([\w-]+\.)+[\w]{2,4}$"
     email_regex = re.compile(email_pattern)
-    print(login(cursor))
+    username_pattern = r"[a-zA-Z_][\w_]+"
+    username_regex = re.compile(username_pattern)
+    con, cursor = create_con()
+    make_init_admin(con=con, cursor=cursor)
+    clear_screen()
 
-#! Sanitize input to prevent sql injection.
-#! Make somewhat of a loop to prompt user to re login if invalid.
-#! MAKE A METHOD FOR USER TO EXIT A PROCESS LIKE, CREATE ACCOUNT OR LOGIN mid way.
+    while 1:
+        print(
+            "\n\033[92m\033[1m\033[3m\033[4m Welcome to the school ERP SYSTEM \033[0m\n"
+        )
+        print("\033[96m\033[3m Here is what you can do:")
+        print(" Mode '1': Create an account")
+        print(" Mode '2': Login into an existing account")
+        print(" Mode '3': To exit this menu \033[0m")
+        mode = input("\n\033[2m\033[1m Enter the mode here: \033[0m")
+        if mode not in ["1", "2", "3"]:
+            print("\033[41m Enter a valid mode, Try again \033[0m")
+            continue
+        clear_screen()
+        if mode == "1":
+            create_account()
+        elif mode == "2":
+            access = login()
+            # To clear the screen for the account stuff.
+            clear_screen()
+            if access == 0:
+                student()
+            elif access == 1:
+                teacher()
+            else:
+                admin()
+        else:
+            print("\n\033[93m\033[3m Exiting the program, BYE \033[0m\n")
+            break
+        clear_screen()
 
 
 if __name__ == "__main__":
