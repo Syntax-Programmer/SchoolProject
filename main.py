@@ -228,12 +228,17 @@ def create_account(
     input("\033[2m Enter any key to go back: \033[0m")
 
 
-def login() -> int:
+def input_login_passwd()->str:
+
+
+def login(username_regex: re.Pattern) -> int:
     # Access Levels:
     # 0: Student
     # 1: Teacher
     # 2: Admin
-    access = 0
+    username = input_username(username_regex=username_regex)
+    passwd = input_login_passwd()
+    login_query = f"SELECT access, verified FROM LoginData WHERE username = '{username}' AND passwd = '{passwd}';"
     return access
 
 
