@@ -236,6 +236,7 @@ def login(username_regex: re.Pattern) -> int:
     # 0: Student
     # 1: Teacher
     # 2: Admin
+    access = 0
     username = input_username(username_regex=username_regex)
     passwd = input_login_passwd()
     login_query = f"SELECT access, verified FROM LoginData WHERE username = '{username}' AND passwd = '{passwd}';"
