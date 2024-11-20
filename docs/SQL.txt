@@ -1,39 +1,98 @@
-MYSQL tables: 
+Database Creation:
+------------------
+    CREATE DATABASE Library;
 
 
-=========LoginData=========
+Users Table:
+------------
 
-SQL command to create:
-----------------------
-    CREATE TABLE LoginData (
-    -> username varchar(50) NOT NULL PRIMARY KEY,
-    -> passwd varchar(128) NOT NULL,
-    -> email varchar(1024) NOT NULL,
-    -> ph_no BIGINT NOT NULL,
-    -> access TINYINT NOT NULL,
-    -> verified TINYINT NOT NULL DEFAULT 0);
+Creation:
+    CREATE TABLE users (
+        userId int NOT NULL PRIMARY KEY,
+        userName varchar(50) NOT NULL,
+        phoneNumber varchar(13),
+        emailId varchar(40) NOT NULL,
+        password varchar(40) NOT NULL,
+        adminStatus varchar(9) NOT NULL DEFAULT "not admin"
+    );
+
+Values:
+    INSERT INTO users
+    VALUES (1023, 'Aman', '9564823675', 'abc@gmail.com', 'Aman@1023', "not admin"),
+           (1024, 'Cman', '8564526545', 'cman1024@gmail.com', 'Cman@1024', "not admin"),
+           (1025, 'Bman', '8623254587', 'def@gmail.com', 'Bman@1025', 'admin'),
+           (1026, 'Dman', '9456875462', 'dman1026@gmail.com', 'Dman@1026', "not admin"),
+           (1028, 'Eman', '8564231547', 'eman1028@gmail.com', 'Eman@1028', "not admin");
 
 
-Table Structure:
-----------------
-+----------+---------------+------+-----+---------+-------+
-| Field    | Type          | Null | Key | Default | Extra |
-+----------+---------------+------+-----+---------+-------+
-| username | varchar(50)   | NO   | PRI | NULL    |       |
-| passwd   | varchar(128)  | NO   |     | NULL    |       |
-| email    | varchar(1024) | NO   |     | NULL    |       |
-| ph_no    | bigint(20)    | NO   |     | NULL    |       |
-| access   | tinyint(4)    | NO   |     | NULL    |       |
-| verified | tinyint(4)    | NO   |     | 0       |       |
-+----------+---------------+------+-----+---------+-------+
+Books Table:
+------------
 
-Remarks:
---------
-1. passwd_hash is the SHA512 hash of the user passwd to make sure that it is secure.
-2. By using username as a primary key, we make sure that username of all the people remain unique.
-3. ph_no uses BIGINT and not INT as ph no can be larger than the limit of the INT = 2 ^ 32
-4. The verified tag tells if the user account is verified by admins to check validity and maintain integrity.
+Creation:
+    CREATE TABLE books (
+        bookId int NOT NULL PRIMARY KEY,
+        bookName varchar(50) NOT NULL,
+        publicationYear int,
+        issueDate date,
+        issueTime time,
+        returnDate date,
+        returnTime time,
+        author varchar(40),
+        issueStatus varchar(10) NOT NULL DEFAULT 'not issued',
+        issueUserId int,
+        FOREIGN KEY (issueUserId) REFERENCES users(userId)
+    );
 
-========= =========
+Values:
+    INSERT INTO books
+    VALUES (3000, 'English', 2005, NULL, NULL, NULL, NULL, 'Sman', "not issued", NULL),
+           (4000, 'Hindi', 2011, NULL, NULL, NULL, NULL, 'Rman', "not issued", NULL),
+           (5000, 'History', 2010, NULL, NULL, NULL, NULL, NULL, "not issued", NULL),
+           (5263, 'physics', 2003, '2023-12-14', '14:31:21', NULL, NULL, "H.C. Verma", 'issued', 1025),
+           (5658, 'cs', 2016, NULL, NULL, NULL, NULL, "Sumita Arora", "not issued", NULL)
+           12305, 'mathematics', 2011, NULL, NULL, NULL, NULL, "V.V. Acharya", "not issued", NULL);
 
-NOTE: ENABLE ON UPDATE CASCADE AND ON DELETE CASCADE FOR FOREIGN TABLES
+
+Notes Table:
+------------
+
+Creation:
+    CREATE TABLE notes (
+        userId int NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(userId),
+        noteNumber int NOT NULL,
+        noteTitle varchar(50),
+        noteDescription varchar(10000),
+        updateDate date NOT NULL,
+        updateTime time NOT NULL
+    );
+
+Values:
+    INSERT INTO notes
+    VALUES (1025, 1, 'ISRO', "The Indian Space Research Organixation (ISRO) is the national space agency of India. It operates as the primary research and development arm of the Department of Space (DoS), which is directly overseen by the Prime Minister of India, while the Chairman of ISRO also acts as the executive of DoS.", '2023-12-14', '18:03:18'),
+           (1023, 1, "Massachusetts Institute Of Technology", "The Massachusetts Institute of Technology (MIT) is a private land-grant research university in Cambridge, Massachusetts. Established in 1861, MIT has played a significant role in the development of many areas of modern technology and science. Its reputation for innnovation and rankings have made it one of the most prestigious university in the world.", '2023-12-14', '17:35:40');
+
+
+IssuedBookDetails Table:
+------------------------
+
+Creation:
+    CREATE TABLE issuedbooksdetails (
+        userId int NOT NULL,
+        bookId int NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(userId),
+        FOREIGN KEY (bookId) REFERENCES books(bookId),
+        bookName varchar(50) NOT NULL,
+        issueDate date,
+        issueTime time,
+        returnDate date,
+        returnTime time,
+        fineInRs int NOT NULL DEFAULT 0
+    );
+
+Values:
+    INSERT INTO issuedbooksdetails
+    VALUES (1025, 5263, 'physics', '2023-12-14', '14:31:21', NULL, NULL, 0),
+           (1023, 5658, 'cs', '2023-12-14', '14:31:53', '2023-12-14', '14:32:04', 0),
+           (1023, 12305, 'mathematics', '2023-12-14', '14:32:28', '2023-12-14', '14:32:34', 0);
+
