@@ -14,7 +14,7 @@ Creation:
         emailId varchar(40) NOT NULL,
         password varchar(40) NOT NULL,
         adminStatus varchar(9) NOT NULL DEFAULT "not admin"
-    );
+    );ygyguij
 
 Values:
     INSERT INTO users
