@@ -1,1062 +1,69 @@
-# Importing necessary libraries
 import mysql.connector
 import pyfiglet
 import wikipediaapi
-from datetime import datetime
 import os
 
-# Connect to the MySQL database
-mycon = mysql.connector.connect(
-    host="localhost",
-    user="anand_maurya",
-    password="ANAND6308anand",
-    database="Library",
-    collation="utf8mb4_unicode_520_ci",
-)
-cursor = mycon.cursor()
+from datetime import datetime
 
 
-def clear_screen() -> None:
-    # The operating system Windows.
-    if os.name == "nt":
+def connectToLibrary():
+    """
+    @brief Creates a database connection to the Library database.
+    @return A tuple of database connection and cursor object.
+    """
+    con = mysql.connector.connect(
+        host="localhost",
+        user="anand_maurya",
+        password="ANAND6308anand",
+        database="Library",
+        collation="utf8mb4_unicode_520_ci",
+    )
+    if not con.is_connected():
+        print("Can't connect to database, try reloading.")
+        exit(1)
+    cursor = con.cursor()
+    return con, cursor
+
+
+def clearScreen() -> None:
+    """
+    @brief Clears the terminal screen of any previous content.
+    """
+    if os.name == "nt":  # windows system.
         os.system("cls")
-    # The operating system is Unix-based
-    else:
+    else:  # unix based system.
         os.system("clear")
 
 
-# Function to display the return policy information
-def returnPolicy() -> None:
-    print("Return Policy : ")
-    print("The issued book should be returned within 14 days(2 weeks).")
-    print(
-        "If the user kept the issued book for more than 14 days, then the\
-    user have to pay ₹5 as fine for each extra day the user kept the issued\
-    book."
-    )
-    print("--------------------------\n")
-
-
-# Function to display a message for an invalid option
-def validOption() -> None:
-    print("\nPlease enter a valid option!")
-    print("--------------------------\n")
-
-
-# Function to handle program exit
-def exiting() -> None:
-    clear_screen()
-    print("\033[3;34m--------------------------\033[0;0m")
-    print("\033[3;33mExiting the program.")
-    print("Thank You!\033[0;0m")
-    print("\033[3;34m--------------------------\033[0;0m")
+def exitLibrary() -> None:
+    """
+    @brief Exits the program with a exit message.
+    """
+    clearScreen()
+    print("\033[3;34m+-----------------------------+\033[0m")
+    print("Exiting the program, Thank You!")
+    print("\033[3;34m+-----------------------------+\033[0m")
     exit(0)
 
 
-# Function to display the user menu and handle user choices
-def userMenu():
-    # Displaying options for the user
-    print("1. Add Note")
-    print("2. Home")
-    print("3. Back")
-    print("4. Exit")
-    # Taking user choice as input
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # Handle user choices
-    if userChoice == 1:
-        addNote()
-    elif userChoice == 2:
-        home()
-    elif userChoice == 3:
-        user()
-    elif userChoice == 4:
-        exiting()
-    else:
-        validOption()
+def printInvalidOptionInterface() -> None:
+    """
+    @brief Prints debug info if the user selected invalid option.
+    """
+    print("\n\033[3;31m+---------------------+\033[0m")
+    print("Invalid option selected")
+    print("\033[3;31m+---------------------+\033[0m\n")
+    input("Press Enter to continue: ")
 
 
-# Function to display the add book menu and handle user choices
-def addBookMenu():
-    # Add book menu options
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        modifyBook()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to add a new book to the library
-def addBook():
-    print("--------------------------")
-    print("Add Book")
-    print("--------------------------")
-    # Get user input for book details
-    bookId = int(input("Enter the Book ID : "))
-    bookName = input("Enter the Book Name : ")
-    publicationYear = int(input("Enter the Book Publication Year : "))
-    author = input("Enter the Book Author Name : ")
-    print("--------------------------")
-    cursor.execute("SELECT bookId FROM books")
-    result = cursor.fetchall()
-    mycon.commit()
-    if (bookId,) in result:
-        print(
-            f'The book of book id "{bookId}" is already available in the digital library.'
-        )
-        print("--------------------------")
-        addBookMenu()
-    else:
-        # Execute SQL query to insert the new book into the database
-        cursor.execute(
-            "INSERT INTO books (bookId, bookName, publicationYear, author) VALUES (%s, %s, %s, %s)",
-            (bookId, bookName, publicationYear, author),
-        )
-        mycon.commit()
-        # Notify the user that the book has been added successfully
-        print("Book added Successfully!")
-        print("--------------------------")
-        addBookMenu()
-
-
-# Function to display the delete book menu and handle user choices
-def deleteBookMenu():
-    # Delete book menu options
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        admin()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to delete a book from the library
-def deleteBook():
-    print("--------------------------")
-    print("Delete Book")
-    print("--------------------------")
-    # Get user input for the book ID to be deleted
-    bookId = int(input("Enter the Book ID : "))
-    choice = input("Are you sure to delete the Book? (Yes/No) : ")
-    print("--------------------------")
-    cursor.execute("SELECT bookId FROM books")
-    result = cursor.fetchall()
-    mycon.commit()
-    if choice.lower() in ["yes", "y"]:
-        if (bookId,) in result:
-            # Execute SQL query to delete the book from the database
-            cursor.execute("DELETE FROM books WHERE bookId=%s", (bookId,))
-            mycon.commit()
-            # Notify the user that the book has been deleted successfully
-            print("Book deleted Successfully!")
-            print("--------------------------")
-            deleteBookMenu()
-        else:
-            print(
-                f'The book of book id "{bookId}" does not available in the digital library.'
-            )
-            print("--------------------------")
-            deleteBookMenu()
-    elif choice.lower() in ["no", "n"]:
-        print("--------------------------")
-        print("Book Not Deleted!")
-        print("--------------------------")
-        deleteBookMenu()
-    else:
-        validOption()
-
-
-# Update book menu options
-def updateBookMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        updateUser()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-def notBook(bookId):
-    print(f'The book of book id "{bookId}" does not available in the digital library.')
-    print("--------------------------")
-    updateBookMenu()
-
-
-# Function to update book details
-def updateBook():
-    print("--------------------------")
-    print("Update Book Details")
-    print("--------------------------")
-    print("1. Update the Book ID")
-    print("2. Update the Book Name")
-    print("3. Update the Book Publication Year")
-    print("4. Update the Book Author Name")
-    print("5. Home")
-    print("6. Back")
-    print("7. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    cursor.execute("SELECT bookId FROM books")
-    result = cursor.fetchall()
-    mycon.commit()
-    # User choices handling
-    if userChoice == 1:
-        currentBookId = int(input("Enter the Current Book ID : "))
-        newBookId = int(input("Enter the New Book ID : "))
-        if (currentBookId,) in result:
-            # Execute SQL query to update the Book ID
-            cursor.execute(
-                "UPDATE books SET bookId=%s WHERE bookId=%s", (newBookId, currentBookId)
-            )
-            mycon.commit()
-            print("Book ID changed Successfully!")
-            print("--------------------------")
-            updateBookMenu()
-        else:
-            notBook(currentBookId)
-    elif userChoice == 2:
-        bookId = int(input("Enter the Book ID : "))
-        newBookName = input("Enter the New Book Name : ")
-        if (bookId,) in result:
-            # Execute SQL query to update the Book Name
-            cursor.execute(
-                "UPDATE books SET bookName=%s WHERE bookId=%s", (newBookName, bookId)
-            )
-            mycon.commit()
-            print("Book Name changed Successfully!")
-            print("--------------------------")
-            updateBookMenu()
-        else:
-            notBook(bookId)
-    elif userChoice == 3:
-        bookId = int(input("Enter the Current Book ID : "))
-        newPublicationYear = input("Enter the New Publication Year : ")
-        if (bookId,) in result:
-            # Execute SQL query to update the Publication Year
-            cursor.execute(
-                "UPDATE books SET publicationYear=%s WHERE bookId=%s",
-                (newPublicationYear, bookId),
-            )
-            mycon.commit()
-            print("Book Publication Year changed Successfully!")
-            print("--------------------------")
-            updateBookMenu()
-    elif userChoice == 4:
-        bookId = int(input("Enter the Current Book ID : "))
-        newAuthor = input("Enter the New Author Name : ")
-        if (bookId,) in result:
-            # Execute SQL query to update the Author Name
-            cursor.execute(
-                "UPDATE books SET author=%s WHERE bookId=%s",
-                (newAuthor, bookId),
-            )
-            mycon.commit()
-            print("Book Author Name changed Successfully!")
-            print("--------------------------")
-            updateBookMenu()
-        else:
-            notBook(bookId)
-    elif userChoice == 5:
-        home()
-    elif userChoice == 6:
-        modifyBook()
-    elif userChoice == 7:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to display the issue book menu and handle user choices
-def issueBookMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        admin()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to issue a book
-def issueBook():
-    print("--------------------------")
-    print("Issue Book")
-    print("--------------------------")
-    bookId = input("Enter the Book ID to be Issued: ")
-    userId = input("Enter the User ID to whom Book will be Issued: ")
-    # Execute SQL query to check the issue status of the book
-    cursor.execute("SELECT userId FROM users")
-    result1 = cursor.fetchall()
-    cursor.execute("SELECT bookId FROM books")
-    result2 = cursor.fetchall()
-    cursor.execute("SELECT issueStatus FROM books WHERE bookId=%s", (bookId,))
-    result3 = cursor.fetchall()
-    mycon.commit()
-    if (userId,) in result1:
-        if (bookId,) in result2:
-            # Check if the book is not already issued
-            if result3[0][0] == "not issued":
-                # Execute SQL queries to update book details and mark it as issued
-                cursor.execute(
-                    "UPDATE books SET issueDate = CURRENT_DATE WHERE bookId = %s",
-                    (bookId,),
-                )
-                cursor.execute(
-                    "UPDATE books SET issueTime = CURRENT_TIME WHERE bookId = %s",
-                    (bookId,),
-                )
-                cursor.execute(
-                    "UPDATE books SET issueStatus = 'issued' WHERE bookId = %s",
-                    (bookId,),
-                )
-                cursor.execute(
-                    "UPDATE books SET returnDate = NULL WHERE bookId = %s", (bookId,)
-                )
-                cursor.execute(
-                    "UPDATE books SET returnTime = NULL WHERE bookId = %s", (bookId,)
-                )
-                cursor.execute(
-                    "UPDATE books SET issuedUserId = %s WHERE bookId = %s",
-                    (userId, bookId),
-                )
-                mycon.commit()
-                cursor.execute(
-                    "select issuedUserId,bookName,issueDate,issueTime from books where bookId=%s",
-                    (bookId,),
-                )
-                result = cursor.fetchall()
-                cursor.execute(
-                    "INSERT INTO issuedBooksDetails (userId,bookId,bookName,issueDate,issueTime) VALUES (%s, %s, %s, %s, %s)",
-                    (result[0][0], bookId, result[0][1], result[0][2], result[0][3]),
-                )
-                mycon.commit()
-                print("--------------------------")
-                print(
-                    f'Book of Book Id "{bookId}" is issued successfully to the User of User Id "{userId}".'
-                )
-                print("--------------------------")
-                returnPolicy()
-                issueBookMenu()
-            else:
-                # Notify the user that the book is already issued
-                print(
-                    f'The book of book id "{bookId}" is already issued by another user.'
-                )
-                print("--------------------------")
-                issueBookMenu()
-        else:
-            print(
-                f"Book with book id {bookId} does not available in the digital library."
-            )
-            print("--------------------------")
-            issueBookMenu()
-    else:
-        print(f"User with user id {userId} does not exists in the digital library.")
-        print("--------------------------")
-        issueBookMenu()
-
-
-# Function to display the return book menu and handle user choices
-def returnBookMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        admin()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to return a book
-def returnBook():
-    print("--------------------------")
-    print("Return Book")
-    print("--------------------------")
-    bookId = int(input("Enter the Book ID to be Returned: "))
-    # Execute SQL query to check the issue status of the book
-    cursor.execute("SELECT bookId FROM books")
-    result1 = cursor.fetchall()
-    cursor.execute("SELECT issueStatus FROM books WHERE bookId=%s", (bookId,))
-    result2 = cursor.fetchall()
-    mycon.commit()
-    if (bookId,) in result1:
-        # Check if the book is issued
-        if result2[0][0] == "issued":
-            # Execute SQL queries to update book details and mark it as returned
-            cursor.execute(
-                "UPDATE books SET returnDate = CURRENT_DATE WHERE bookId = %s",
-                (bookId,),
-            )
-            cursor.execute(
-                "UPDATE books SET returnTime = CURRENT_TIME WHERE bookId = %s",
-                (bookId,),
-            )
-            cursor.execute(
-                "UPDATE books SET issueStatus = 'not issued' WHERE bookId = %s",
-                (bookId,),
-            )
-            mycon.commit()
-            cursor.execute(
-                "select issuedUserId,returnDate,returnTime from books where bookID = %s",
-                (bookId,),
-            )
-            result = cursor.fetchall()
-            cursor.execute(
-                "UPDATE issuedBooksDetails SET returnDate = %s, returnTime = %s WHERE userId = %s AND bookId = %s",
-                (result[0][1], result[0][2], result[0][0], bookId),
-            )
-            mycon.commit()
-            cursor.execute(
-                "UPDATE books SET issuedUserId = NULL WHERE bookId = %s", (bookId,)
-            )
-            mycon.commit()
-            print(f'The book of book id "{bookId}" is returned successfully.')
-            cursor.execute("select issueDate from books WHERE bookId = %s", (bookId,))
-            issueDate = cursor.fetchall()
-            cursor.execute("select returnDate from books WHERE bookId = %s", (bookId,))
-            returnDate = cursor.fetchall()
-            mycon.commit()
-            cursor.execute(
-                "UPDATE books SET issueDate = NULL WHERE bookId = %s", (bookId,)
-            )
-            cursor.execute(
-                "UPDATE books SET issueTime = NULL WHERE bookId = %s", (bookId,)
-            )
-            cursor.execute(
-                "UPDATE books SET returnDate = NULL WHERE bookId = %s", (bookId,)
-            )
-            cursor.execute(
-                "UPDATE books SET returnTime = NULL WHERE bookId = %s", (bookId,)
-            )
-            mycon.commit()
-            d1 = datetime.strptime(f"{issueDate[0][0]}", "%Y-%m-%d")
-            d2 = datetime.strptime(f"{returnDate[0][0]}", "%Y-%m-%d")
-            dateDifference = d1 - d2
-            if dateDifference.days > 14:
-                extraDays = dateDifference.days - 14
-                fine = extraDays * 5
-                print("Fine(in Rs.) : ", fine)
-                cursor.execute(
-                    "update issuedBooksDetails set fineInRs=%s where userId=%s and bookId=%s",
-                    (fine, result[0][0], bookId),
-                )
-                mycon.commit()
-            else:
-                fine = 0 * 5
-                print("Fine(in Rs.) : ", fine)
-                cursor.execute(
-                    "update issuedBooksDetails set fineInRs=%s where userId=%s and bookId=%s",
-                    (fine, result[0][0], bookId),
-                )
-                mycon.commit()
-                print("--------------------------")
-                returnBookMenu()
-
-        else:
-            # Notify the user that the book is not issued
-            print(f'The book of book id "{bookId}" is not issued by any user.')
-            print("--------------------------")
-            returnBookMenu()
-    else:
-        print(f"Book with book id {bookId} does not available in the digital library.")
-        print("--------------------------")
-        returnBookMenu()
-
-
-# Function to display the add user menu and handle user choices
-def addUserMenu():
-    # Add user menu options
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        modifyUser()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to add a new user
-def addUser():
-    print("--------------------------")
-    print("Add User")
-    print("--------------------------")
-    # Get user input for user details
-    userId = int(input("Enter the User ID : "))
-    userName = input("Enter the User Name : ")
-    userPhoneNumber = input("Enter the User Phone Number : ")
-    userEmailId = input("Enter the User Email ID : ")
-    password = input("Enter the User Password : ")
-    print("--------------------------")
-    cursor.execute("SELECT userId FROM users")
-    result = cursor.fetchall()
-    mycon.commit()
-    if (userId,) in result:
-        print(
-            f'The user of user number "{userId}" is already enrolled in the digital library.'
-        )
-        print("--------------------------")
-        addUserMenu()
-    else:
-        # Execute SQL query to insert the new user into the database
-        cursor.execute(
-            "INSERT INTO users (userId, userName, phoneNumber, emailId, password) VALUES (%s, %s, %s, %s, %s)",
-            (userId, userName, userPhoneNumber, userEmailId, password),
-        )
-        mycon.commit()
-        # Notify the user that the user has been added successfully
-        print("--------------------------")
-        print("User added successfully!")
-        print("--------------------------")
-        addUserMenu()
-
-
-# Function to display the delete user menu and handle user choices
-def deleteUserMenu():
-    # Delete user menu options
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        modifyUser()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to delete a user
-def deleteUser():
-    print("--------------------------")
-    print("Delete User")
-    print("--------------------------")
-    # Get user input for the user ID to be deleted
-    userId = int(input("Enter the User ID : "))
-    choice = input("Are you sure to delete the User? (Yes/No) : ")
-    cursor.execute("SELECT userId FROM users")
-    result = cursor.fetchall()
-    mycon.commit()
-    if choice.lower() in ["yes", "y"]:
-        if (userId,) in result:
-            cursor.execute("DELETE FROM users WHERE userId=%s", (userId,))
-            mycon.commit()
-            # Notify the user that the user has been deleted successfully
-            print("User deleted successfully!")
-            print("--------------------------")
-            deleteUserMenu()
-        else:
-            print(
-                f'The user of user id "{userId}" does not enrolled in the digital library.'
-            )
-            print("--------------------------")
-            deleteUserMenu()
-    elif choice.lower() in ["no", "n"]:
-        print("--------------------------")
-        print("User Not Deleted!")
-        print("--------------------------")
-        deleteUserMenu()
-    else:
-        validOption()
-
-
-# Function to display the update user menu and handle user choices
-def updateUserMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        updateUser()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-def notUser(userId):
-    print(f'The user of user id "{userId}" does not enrolled in the digital library.')
-    print("--------------------------")
-    updateBookMenu()
-
-
-# Function to update user details
-def updateUser():
-    print("--------------------------")
-    print("Update User Details")
-    print("--------------------------")
-    # Display user update options
-    print("1. Update the User ID")
-    print("2. Update the User Name")
-    print("3. Update the User Phone Number")
-    print("4. Update the User Email ID")
-    print("5. Update the User Password")
-    print("6. Home")
-    print("7. Back")
-    print("8. Exit")
-    # Get user choice
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    cursor.execute("SELECT userId FROM users")
-    result = cursor.fetchall()
-    mycon.commit()
-    if userChoice == 1:
-        # Update user ID
-        currentUserId = int(input("Enter the Current User ID : "))
-        newUserId = int(input("Enter the New User ID : "))
-        if (currentUserId,) in result:
-            cursor.execute(
-                "update users set userId=%s where userId=%s", (newUserId, currentUserId)
-            )
-            mycon.commit()
-            print("User ID changed Successfully!")
-            print("--------------------------")
-            updateUserMenu()
-        else:
-            notUser(currentUserId)
-    elif userChoice == 2:
-        # Update user name
-        userId = int(input("Enter the User ID : "))
-        newUserName = input("Enter the New User Name : ")
-        if (userId,) in result:
-            cursor.execute(
-                "update users set userName=%s where userId=%s", (newUserName, userId)
-            )
-            mycon.commit()
-            print("User Name changed Successfully!")
-            print("--------------------------")
-            updateUserMenu()
-        else:
-            notUser(userId)
-    elif userChoice == 3:
-        # Update user phone number
-        userId = int(input("Enter the Current User ID : "))
-        newPhoneNumber = input("Enter the New Phone Number : ")
-        if (userId,) in result:
-            cursor.execute(
-                "update users set phoneNumber=%s where userId=%s",
-                (newPhoneNumber, userId),
-            )
-            mycon.commit()
-            print("User Phone Number changed Successfully!")
-            print("--------------------------")
-            updateUserMenu()
-        else:
-            notUser(userId)
-    elif userChoice == 4:
-        # Update user email ID
-        userId = int(input("Enter the Current User ID : "))
-        newEmailId = input("Enter the New Email ID : ")
-        if (userId,) in result:
-            cursor.execute(
-                "update users set emailId=%s where userId=%s", (newEmailId, userID)
-            )
-            mycon.commit()
-            print("User Email ID changed Successfully!")
-            print("--------------------------")
-            updateUserMenu()
-        else:
-            notUser(userId)
-    elif userChoice == 5:
-        # Update user password
-        userId = int(input("Enter the Current User ID : "))
-        newPassword = input("Enter the New Password : ")
-        if (userId,) in result:
-            cursor.execute(
-                "update users set password=%s where userId=%s", (newPassword, userId)
-            )
-            mycon.commit()
-            print("User Password changed Successfully!")
-            print("--------------------------")
-            updateUserMenu()
-        else:
-            notUser(userId)
-    elif userChoice == 6:
-        # Return to home
-        home()
-    elif userChoice == 7:
-        # Go back to the previous menu
-        modifyUser()
-    elif userChoice == 8:
-        # Exit the program
-        exiting()
-    else:
-        validOption()
-
-
-# Function to modify user
-def modifyUser():
-    print("--------------------------")
-    print("Modify User")
-    print("--------------------------")
-    # Display user modification options
-    print("1. Add User")
-    print("2. Delete User")
-    print("3. Update User Details")
-    print("4. Home")
-    print("5. Back")
-    print("6. Exit")
-    # Get user choice
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        # Add a new user
-        addUser()
-    elif userChoice == 2:
-        # Delete a user
-        deleteUser()
-    elif userChoice == 3:
-        # Update user details
-        updateUser()
-    elif userChoice == 4:
-        # Return to home
-        home()
-    elif userChoice == 5:
-        # Return to the previous menu
-        admin()
-    elif userChoice == 6:
-        # Exit the program
-        exiting()
-    else:
-        validOption()
-
-
-# Display users menu options
-def displayUsersMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        admin()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to display all users
-def displayUsers():
-    print("--------------------------")
-    print("Display Users")
-    print("--------------------------")
-    # Fetch all users from the database
-    cursor.execute("SELECT * FROM users ORDER BY userId")
-    result = cursor.fetchall()
-    mycon.commit()
-    if result:
-        # Display user information
-        print("Users enrolled in the Digital Library are :")
-        i = 0
-        for row in result:
-            i += 1
-            r = leftpad_calculator(i)
-            print(f"{i}. User ID : {row[0]}")
-            print(" " * r + f"User Name : {row[1]}")
-            print(" " * r + f"Phone Number : {row[2]}")
-            print(" " * r + f"Email ID : {row[3]}")
-            print(" " * r + f"Admin Status : {row[5]}")
-            print("--------------------------")
-            displayUsersMenu()
-    else:
-        print("No users found.")
-        print("--------------------------")
-        displayUsersMenu()
-
-
-# Search user menu options
-def searchUsersMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    # User choices handling
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        searchUsers()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to search users by ID
-def searchUsersbyId():
-    print("--------------------------")
-    print("Search Users by User ID")
-    print("--------------------------")
-    # Get user ID to search
-    userId = int(input("Enter the User ID to search the User : "))
-    # Search for the user in the database
-    cursor.execute("SELECT * FROM users WHERE userId=%s", (userId,))
-    result = cursor.fetchall()
-    mycon.commit()
-    if result:
-        # Display user information if found
-        print(f'User enrolled in the Digital Library with the User ID "{userId}" is :')
-        i = 0
-        for row in result:
-            i += 1
-            r = leftpad_calculator(i)
-            print(f"{i}. User ID : {row[0]}")
-            print(" " * r + f"User Name : {row[1]}")
-            print(" " * r + f"Phone Number : {row[2]}")
-            print(" " * r + f"Email ID : {row[3]}")
-            print(" " * r + f"Admin Status : {row[5]}")
-            print("--------------------------")
-            searchUsersMenu()
-    else:
-        # Handle case when no user is found
-        print(f'No user found with the user id "{userId}".')
-        print("--------------------------")
-        searchUsersMenu()
-
-
-# Function to search users by keyword
-def searchUsersbyKeyword():
-    print("--------------------------")
-    print("Search Users by Keyword")
-    print("--------------------------")
-    # Get keyword input from the user
-    keyword = input("Enter a Keyword to search Users : ")
-    # Search for users with the given keyword in their names
-    cursor.execute(
-        "SELECT * FROM users WHERE userName LIKE '%{}%' ORDER BY userId".format(keyword)
-    )
-    result = cursor.fetchall()
-    mycon.commit()
-    if result:
-        # Display user information if users are found
-        print(
-            f'Users enrolled in the Digital Library with the Keyword "{keyword}" are :'
-        )
-        i = 0
-        for row in result:
-            i += 1
-            r = leftpad_calculator(i)
-            print(f"{i}. User ID : {row[0]}")
-            print(" " * r + f"User Name : {row[1]}")
-            print(" " * r + f"Phone Number : {row[2]}")
-            print(" " * r + f"Email ID : {row[3]}")
-            print(" " * r + f"Admin Status : {row[5]}")
-            print("--------------------------")
-            searchUsersMenu()
-    else:
-        # Handle case when no user is found
-        print(f'No users found with the keyword "{keyword}".')
-        print("--------------------------")
-        searchUsersMenu()
-
-
-# Function to search users
-def searchUsers():
-    print("--------------------------")
-    print("Search Users")
-    print("--------------------------")
-    # User search menu
-    print("1. Search by User ID")
-    print("2. Search by Keyword")
-    print("3. Home")
-    print("4. Back")
-    print("5. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        searchUsersbyId()
-    elif userChoice == 2:
-        searchUsersbyKeyword()
-    elif userChoice == 3:
-        home()
-    elif userChoice == 4:
-        admin()
-    elif userChoice == 5:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to modify books
-def modifyBook():
-    print("--------------------------")
-    print("Modify Book")
-    print("--------------------------")
-    # Book modification menu
-    print("1. Add Book")
-    print("2. Delete Book")
-    print("3. Update Book Details")
-    print("4. Home")
-    print("5. Back")
-    print("6. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # User choices handling
-    if userChoice == 1:
-        addBook()
-    elif userChoice == 2:
-        deleteBook()
-    elif userChoice == 3:
-        updateBook()
-    elif userChoice == 4:
-        home()
-    elif userChoice == 5:
-        admin()
-    elif userChoice == 6:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to display the change admin menu and handle user choices
-def changeAdminMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # Handle user choices
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        admin()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to change the admin status
-def changeAdmin():
-    print("--------------------------")
-    print("Change Admin")
-    print("--------------------------")
-    # Get new admin's ID and password from the user
-    newAdminId = int(input("Enter the New Admin's User ID : "))
-    newAdminPassword = input("Enter the New Admin's Password : ")
-    choice = input("Are you sure to change the Admin? (Yes/No) : ")
-    print("--------------------------")
-    # Check if the entered user ID exists
-    cursor.execute("SELECT password FROM users WHERE userId=%s", (newAdminId,))
-    result = cursor.fetchall()
-    mycon.commit()
-    # Check the user's choice to proceed or cancel
-    if choice.lower() in ["yes", "y"]:
-        # If the user ID is not valid, print an error message
-        if len(result) == 0:
-            print("Please enter a valid user id!")
-        else:
-            # If the entered password matches the user's password
-            if newAdminPassword == result[0][0]:
-                # Update admin status for all users
-                cursor.execute(
-                    "UPDATE users SET adminStatus='not admin' WHERE adminStatus ='admin'"
-                )
-                cursor.execute(
-                    "UPDATE users SET adminStatus='admin' WHERE userId=%s",
-                    (newAdminId,),
-                )
-                mycon.commit()
-                print("Admin Changed Successfully!")
-                print("--------------------------")
-                changeAdminMenu()
-            else:
-                print("Please enter a valid password!")
-    elif choice.lower() in ["no", "n"]:
-        print("Admin Not Changed!")
-        print("--------------------------")
-        changeAdminMenu()
-    else:
-        validOption()
-
-
-def auth_user() -> int:
-    clear_screen()
-    print("--------------------------")
-    print("Authenticate User")
-    print("--------------------------\n")
-    while True:
-        id = int(input("Enter the user id : "))
-        passwd = input("Enter the user password : ")
-        status = []
-        auth_query = f"SELECT adminStatus FROM users WHERE userId = {id} AND password = '{passwd}'"
-
-        cursor.execute(auth_query)
-        status = cursor.fetchall()
-        if not status:
-            print("---------------------------")
-            print("Invalid userId or password.")
-            print("---------------------------")
-            continue
-        break
-    print("\033[0;35m----------------------\033[0;0m")
-    print("\033[0;36mVerified successfully.\033[0;0m")
-    print("\033[0;35m----------------------\033[0;0m")
-    global USERID
-    USERID = id
-    return 1 if status[0][0] == "admin" else 0
-
-
-def print_admin_screen() -> None:
-    print("--------------------------")
+def printAdminInterface() -> None:
+    """
+    @brief Print the admin screen's interface.
+    """
+    clearScreen()
+    print("\033[3;34m+---+\033[0m")
     print("Admin")
-    print("--------------------------\n")
+    print("\033[3;34m+---+\033[0m\n")
     print("1: Login into User Panel")
     print("2: Modify User")
     print("3: Display Users")
@@ -1064,681 +71,1594 @@ def print_admin_screen() -> None:
     print("5: Modify Book")
     print("6: Issue Book")
     print("7: Return Book")
-    print("8: Change Admin")
+    print("8: Add Admin")
     print("9: Back")
     print("10: Exit")
-    print("--------------------------")
+    print("\033[3;34m+----------------------+\033[0m\n")
 
 
-# Function to display the admin menu
-def admin() -> None:
-    while True:
-        clear_screen()
-        print_admin_screen()
-        choice = int(input("Enter your choice to Continue : "))
-        # Handle user choices
-        if choice == 1:
-            user()
-        elif choice == 2:
-            modifyUser()
-        elif choice == 3:
-            displayUsers()
-        elif choice == 4:
-            searchUsers()
-        elif choice == 5:
-            modifyBook()
-        elif choice == 6:
-            issueBook()
-        elif choice == 7:
-            returnBook()
-        elif choice == 8:
-            changeAdmin()
-        elif choice == 9:
-            break
-        elif choice == 10:
-            exiting()
+def printModifyUserInterface() -> None:
+    """
+    @brief Print the modify user screen's interface.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Modify User Screen")
+    print("\033[3;34m+----------------+\033[0m\n")
+    print("1: Add User")
+    print("2: Delete User")
+    print("3: Update User")
+    print("4: Back")
+    print("5: Exit")
+    print("\033[3;34m+------------+\033[0m\n")
+
+
+def addUser(db_con, db_cursor) -> None:
+    """
+    @brief Adds a new user to the users table in the Library database.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+------+\033[0m")
+    print("Add User")
+    print("\033[3;34m+------+\033[0m\n")
+    id = int(input("Enter the user id for the user: "))
+    name = input("Enter the username for the user: ")
+    ph_no = input("Enter the phone number for the user: ")
+    email = input("Enter the email for the user: ")
+    passwd = input("Enter the password for the user: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT userId FROM users WHERE userId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        print(f"The user with the userId: {id} already exists, try again.")
+    else:
+        db_cursor.execute(
+            f'INSERT INTO users VALUES({id}, "{name}", "{ph_no}", "{email}", "{passwd}", "not admin")'
+        )
+        db_con.commit()
+        print("User added successfully.")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def deleteUser(db_con, db_cursor) -> None:
+    """
+    @brief Delete an existing user from the users table.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+---------+\033[0m")
+    print("Delete User")
+    print("\033[3;34m+---------+\033[0m\n")
+    id = int(input("Enter the user ID to delete: "))
+    choice = input("Are you sure you want to delete the note? (Y/N): ").lower()
+    print("\033[3;34m+------------------------+\033[0m\n")
+    if choice in ["yes", "y"]:
+        db_cursor.execute(f"SELECT userId FROM users WHERE userId = {id}")
+        # A check to confirm that if the user can perform the action they are trying to do.
+        does_exist = bool(db_cursor.fetchall())
+        if does_exist:
+            db_cursor.execute(f"DELETE FROM users WHERE userId = {id}")
+            db_con.commit()
+            print(f"The user with userId: {id} deleted successfully.")
         else:
-            validOption()
+            print(f"The user with userId: {id} does not exist.")
+    else:
+        print("User not deleted!")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
 
 
-def print_user_screen() -> None:
-    print("--------------------------")
-    print("User")
-    print("--------------------------\n")
+def printUpdateUserInterface() -> None:
+    """
+    @brief Print the update user screen's interface.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Update User Screen")
+    print("\033[3;34m+----------------+\033[0m\n")
+    print("1: Update User Id")
+    print("2: Update User Name")
+    print("3: Update User Phone Number")
+    print("4: Update User Email")
+    print("5: Update User Password")
+    print("6: Back")
+    print("7: Exit")
+    print("\033[3;34m+-------------------------+\033[0m\n")
+
+
+def updateUserId(db_con, db_cursor) -> None:
+    """
+    @brief Updates user id of the given user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+------------+\033[0m")
+    print("Update User Id")
+    print("\033[3;34m+------------+\033[0m\n")
+    curr = int(input("Enter the user ID to update: "))
+    new = input("Enter the new user ID to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT userId FROM users WHERE userId = {curr}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f"UPDATE users\
+            SET userId = {new}\
+            WHERE userId = {curr}"
+        )
+        db_con.commit()
+        print(f"Current user Id: {curr} successfully changed to: {new}")
+    else:
+        print(f"We don't have any user with Id: {curr}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateUserName(db_con, db_cursor) -> None:
+    """
+    @brief Updates user name of the given user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+--------------+\033[0m")
+    print("Update User Name")
+    print("\033[3;34m+--------------+\033[0m\n")
+    id = int(input("Enter the user ID to update: "))
+    new = input("Enter the new name to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT userId FROM users WHERE userId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f'UPDATE users\
+            SET userName = "{new}"\
+            WHERE userId = {id}'
+        )
+        db_con.commit()
+        print(f"Name of the user with  user Id: {id} successfully changed to: {new}")
+    else:
+        print(f"We don't have any user with Id: {id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateUserPhoneNumber(db_con, db_cursor) -> None:
+    """
+    @brief Updates user phone number of the given user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------------+\033[0m")
+    print("Update User Phone Number")
+    print("\033[3;34m+----------------------+\033[0m\n")
+    id = int(input("Enter the user ID to update: "))
+    new = input("Enter the new phone number to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT userId FROM users WHERE userId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f'UPDATE users\
+            SET phoneNumber = "{new}"\
+            WHERE userId = {id}'
+        )
+        db_con.commit()
+        print(f"Phone of the user with  user Id: {id} successfully changed to: {new}")
+    else:
+        print(f"We don't have any user with Id: {id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateUserEmailId(db_con, db_cursor) -> None:
+    """
+    @brief Updates email id of the given user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+---------------+\033[0m")
+    print("Update User Email")
+    print("\033[3;34m+---------------+\033[0m\n")
+    id = int(input("Enter the user ID to update: "))
+    new = input("Enter the new email to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT userId FROM users WHERE userId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f'UPDATE users\
+            SET emailId = "{new}"\
+            WHERE userId = {id}'
+        )
+        db_con.commit()
+        print(f"Email of the user with  user Id: {id} successfully changed to: {new}")
+    else:
+        print(f"We don't have any user with Id: {id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateUserPassword(db_con, db_cursor) -> None:
+    """
+    @brief Updates password of the given user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+------------------+\033[0m")
+    print("Update User Password")
+    print("\033[3;34m+------------------+\033[0m\n")
+    id = int(input("Enter the user ID to update: "))
+    new = input("Enter the new password to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT userId FROM users WHERE userId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f'UPDATE users\
+            SET password = "{new}"\
+            WHERE userId = {id}'
+        )
+        db_con.commit()
+        print(
+            f"Password of the user with  user Id: {id} successfully changed to: {new}"
+        )
+    else:
+        print(f"We don't have any user with Id: {id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateUser(db_con, db_cursor) -> None:
+    """
+    @brief The update user screen for admin.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printUpdateUserInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            updateUserId(db_con, db_cursor)
+        elif choice == "2":
+            updateUserName(db_con, db_cursor)
+        elif choice == "3":
+            updateUserPhoneNumber(db_con, db_cursor)
+        elif choice == "4":
+            updateUserEmailId(db_con, db_cursor)
+        elif choice == "5":
+            updateUserPassword(db_con, db_cursor)
+        elif choice == "6":
+            break
+        elif choice == "7":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def modifyUser(db_con, db_cursor) -> None:
+    """
+    @brief The modify user screen for admin.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printModifyUserInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            addUser(db_con, db_cursor)
+        elif choice == "2":
+            deleteUser(db_con, db_cursor)
+        elif choice == "3":
+            updateUser(db_con, db_cursor)
+        elif choice == "4":
+            break
+        elif choice == "5":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def displayUsers(db_cursor) -> None:
+    """
+    @brief Display's all the users in the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+-----------+\033[0m")
+    print("Display Users")
+    print("\033[3;34m+-----------+\033[0m\n")
+    fetch_query = "SELECT userId, userName, phoneNumber, emailId issueStatus FROM users"
+    db_cursor.execute(fetch_query)
+    users = db_cursor.fetchall()
+    if users:
+        print("\033[3;34m+--------------------------+\033[0m")
+        print("User in the Digital Library:")
+        print("\033[3;34m+--------------------------+\033[0m")
+        for i, row in enumerate(users):
+            print(f"{i + 1}. User ID : {row[0]}")
+            print(f"User Name : {row[1]}")
+            print(f"Phone Number : {row[2]}")
+            print(f"Email ID : {row[3]}")
+            print("\033[3;34m+------------------------+\033[0m")
+        print()
+    else:
+        print("\033[3;34m+------------------------+\033[0m\n")
+        print("No users found.")
+        print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def printSearchUserInterface() -> None:
+    """
+    @brief Print the search user screen's interface.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Search User Screen")
+    print("\033[3;34m+----------------+\033[0m\n")
+    print("1: Search User By ID")
+    print("2: Search User By Keyword")
+    print("3: Back")
+    print("4: Exit")
+    print("\033[3;34m+-----------------------+\033[0m\n")
+
+
+def searchUserById(db_cursor) -> None:
+    """
+    @brief Searches for user with the given user id.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Search Users By ID")
+    print("\033[3;34m+----------------+\033[0m\n")
+    id = int(input("Enter the userID to search: "))
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT userName, phoneNumber, emailId FROM users where userId = {id}"
+    )
+    user = db_cursor.fetchall()
+    if user:
+        print(f"User in the Digital Library with the user ID '{id}' is :")
+        print("\033[3;34m+------------------------+\033[0m")
+        print(f"User ID : {id}")
+        print(f"User Name : {user[0][0]}")
+        print(f"User Phone Number : {user[0][1]}")
+        print(f"User Email Id: {user[0][2]}")
+    else:
+        print(f'No user found with the user id "{id}".')
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def searchUserByKeyword(db_cursor) -> None:
+    """
+    @brief Searches for user with the given user id.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+---------------------+\033[0m")
+    print("Search Users By Keyword")
+    print("\033[3;34m+---------------------+\033[0m\n")
+    keyword = input("Enter the keyword to search:")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT userId, userName, phoneNumber, emailId FROM users WHERE userName LIKE '%{keyword}%'"
+    )
+    users = db_cursor.fetchall()
+    if users:
+        print(f"Users in the Digital Library with the Keyword '{keyword}' are :")
+        print("\033[3;34m+------------------------+\033[0m")
+        for i, row in enumerate(users):
+            print(f"{i + 1}. User ID : {row[0]}")
+            print(f"User Name : {row[1]}")
+            print(f"User Phone Number : {row[2]}")
+            print(f"User Email Address : {row[3]}")
+            print("\033[3;34m+------------------------+\033[0m")
+        print()
+    else:
+        print(f"No user with the keyword: '{keyword}' found.")
+        print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def searchUsers(db_cursor) -> None:
+    """
+    @brief The search user screen for admin.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printSearchUserInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            searchUserById(db_cursor)
+        elif choice == "2":
+            searchUserByKeyword(db_cursor)
+        elif choice == "3":
+            break
+        elif choice == "4":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def printModifyBookInterface() -> None:
+    """
+    @brief Print the modify book screen's interface.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Modify Book Screen")
+    print("\033[3;34m+----------------+\033[0m\n")
+    print("1: Add Book")
+    print("2: Delete Book")
+    print("3: Update Book")
+    print("4: Back")
+    print("5: Exit")
+    print("\033[3;34m+------------+\033[0m\n")
+
+
+def addBook(db_con, db_cursor) -> None:
+    """
+    @brief Adds a book into the books table in Library database.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+------+\033[0m")
+    print("Add Book")
+    print("\033[3;34m+------+\033[0m\n")
+    id = int(input("Enter the book id for the book: "))
+    name = input("Enter the name for the book: ")
+    publication_year = int(input("Enter the publication year of the book: "))
+    author = input("Enter the author for the book: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT bookId FROM books WHERE bookId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        print(f"The book with the bookId: {id} already exists, try again.")
+    else:
+        db_cursor.execute(
+            f'INSERT INTO books(bookId, bookName, publicationYear, author)\
+            VALUES({id}, "{name}", {publication_year}, "{author}")'
+        )
+        db_con.commit()
+        print("Book added successfully.")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def deleteBook(db_con, db_cursor) -> None:
+    """
+    @brief Delete an existing book from the users table.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+---------+\033[0m")
+    print("Delete Book")
+    print("\033[3;34m+---------+\033[0m\n")
+    id = int(input("Enter the book ID to delete: "))
+    choice = input("Are you sure you want to delete the note? (Y/N): ").lower()
+    print("\033[3;34m+------------------------+\033[0m\n")
+    if choice in ["yes", "y"]:
+        db_cursor.execute(f"SELECT bookId FROM books WHERE bookId = {id}")
+        # A check to confirm that if the user can perform the action they are trying to do.
+        does_exist = bool(db_cursor.fetchall())
+        if does_exist:
+            db_cursor.execute(f"DELETE FROM books WHERE bookId = {id}")
+            db_con.commit()
+            print(f"The book with bookId: {id} deleted successfully.")
+        else:
+            print(f"The book with bookId: {id} does not exist.")
+    else:
+        print("Book not deleted!")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def printUpdateBookInterface() -> None:
+    """
+    @brief Print the update book screen's interface.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Modify Book Screen")
+    print("\033[3;34m+----------------+\033[0m\n")
+    print("1: Update Book Id")
+    print("2: Update Book Name")
+    print("3: Update Book Publication Year")
+    print("4: Update Book Author")
+    print("5: Back")
+    print("6: Exit")
+    print("\033[3;34m+------------+\033[0m\n")
+
+
+def updateBookId(db_con, db_cursor) -> None:
+    """
+    @brief Updates the book id of an existing book.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+------------------+\033[0m")
+    print("Update Book Id")
+    print("\033[3;34m+------------------+\033[0m\n")
+    id = int(input("Enter the book ID to update: "))
+    new = int(input("Enter the new book ID to set: "))
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT bookId FROM books WHERE bookId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f"UPDATE books\
+            SET bookId = {new}\
+            WHERE bookId = {id}"
+        )
+        db_con.commit()
+        print(f"Book Id: {id} successfully changed to: {new}")
+    else:
+        print(f"We don't have any book with Id: {id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateBookName(db_con, db_cursor) -> None:
+    """
+    @brief Updates the book name of an existing book.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+--------------------+\033[0m")
+    print("Update Book Name")
+    print("\033[3;34m+--------------------+\033[0m\n")
+    id = int(input("Enter the book ID to update: "))
+    new = input("Enter the new book name to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT bookId FROM books WHERE bookId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f'UPDATE books\
+            SET bookName = "{new}"\
+            WHERE bookId = {id}'
+        )
+        db_con.commit()
+        print(f"Book name of the book with Id: {id} successfully changed to: {new}")
+    else:
+        print(f"We don't have any book with Id: {id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateBookPublicationYear(db_con, db_cursor) -> None:
+    """
+    @brief Updates the book publication year of an existing book.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+--------------------------------+\033[0m")
+    print("Update Book Publication Year")
+    print("\033[3;34m+--------------------------------+\033[0m\n")
+    id = int(input("Enter the book ID to update: "))
+    new = input("Enter the new book publication year to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT bookId FROM books WHERE bookId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f"UPDATE books\
+            SET publicationYear = {new}\
+            WHERE bookId = {id}"
+        )
+        db_con.commit()
+        print(
+            f"Book publication year of the book with Id: {id} successfully changed to: {new}"
+        )
+    else:
+        print(f"We don't have any book with Id: {id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateBookAuthor(db_con, db_cursor) -> None:
+    """
+    @brief Updates the book author of an existing book.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------------+\033[0m")
+    print("Update Book Author")
+    print("\033[3;34m+----------------------+\033[0m\n")
+    id = int(input("Enter the book ID to update: "))
+    new = input("Enter the new book author to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT bookId FROM books WHERE bookId = {id}")
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f'UPDATE books\
+            SET author = "{new}"\
+            WHERE bookId = {id}'
+        )
+        db_con.commit()
+        print(f"Book author of the book with Id: {id} successfully changed to: {new}")
+    else:
+        print(f"We don't have any book with Id: {id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateBook(db_con, db_cursor) -> None:
+    """
+    @brief The update book screen for the admin.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printUpdateBookInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            updateBookId(db_con, db_cursor)
+        elif choice == "2":
+            updateBookName(db_con, db_cursor)
+        elif choice == "3":
+            updateBookPublicationYear(db_con, db_cursor)
+        elif choice == "4":
+            updateBookAuthor(db_con, db_cursor)
+        elif choice == "5":
+            break
+        elif choice == "6":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def modifyBook(db_con, db_cursor) -> None:
+    """
+    @brief The modify book screen for the admin.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printModifyBookInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            addBook(db_con, db_cursor)
+        elif choice == "2":
+            deleteBook(db_con, db_cursor)
+        elif choice == "3":
+            updateBook(db_con, db_cursor)
+        elif choice == "4":
+            break
+        elif choice == "5":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def issueBook(db_con, db_cursor) -> None:
+    """
+    @brief Allows the admin to issue a book to a user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+--------------+\033[0m")
+    print("Issue Book")
+    print("\033[3;34m+--------------+\033[0m\n")
+    book_id = int(input("Enter the book ID to issue: "))
+    user_id = int(input("Enter the user ID to issue the book to: "))
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT issueStatus, bookName FROM books WHERE bookId = {book_id}"
+    )
+    # We don't bool cast it as we need to access the issueStatus
+    book_data = db_cursor.fetchall()
+    db_cursor.execute(f"SELECT userId FROM users WHERE userId = {user_id}")
+    does_user_exist = bool(db_cursor.fetchall())
+    if not book_data:
+        print(f"The book with the Id: {book_id} does not exist.")
+    elif book_data[0][0] == "issued":
+        print(f"The book with the Id: {book_id} is already issued.")
+    elif not does_user_exist:
+        print(f"The user with the Id: {user_id} does not exist.")
+    else:
+        db_cursor.execute(
+            f"UPDATE books SET issueStatus = 'issued' WHERE bookId = {book_id}"
+        )
+        db_cursor.execute(
+            f"INSERT INTO issuedbooksdetails\
+                          VALUES ({user_id}, {book_id}, CURRENT_DATE, CURRENT_TIME, NULL, NULL, 0, '{book_data[0][1]}')"
+        )
+        db_con.commit()
+        print(f"Book with Id: {book_id} issued to user with the Id: {user_id}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def returnBook(db_con, db_cursor) -> None:
+    """
+    @brief Allows to return a book from a user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+--------------+\033[0m")
+    print("Issue Book")
+    print("\033[3;34m+--------------+\033[0m\n")
+    book_id = int(input("Enter the book ID to return: "))
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT issueStatus FROM books WHERE bookId = {book_id}")
+    issue_status = db_cursor.fetchall()
+    # This is a good enough fix as we can't add books which haven't been returned yet.
+    # We need user_id to pin point the correct user that is returning the book.
+    db_cursor.execute(
+        f"SELECT userId FROM issuedbooksdetails WHERE bookId = {book_id} AND returnDate IS NULL"
+    )
+    user_id = db_cursor.fetchall()[0][0]
+    if not issue_status:
+        print(f"The book with the Id: {book_id} does not exist.")
+    elif issue_status[0][0] == "not issued":
+        print(f"The book with the Id: {book_id} has not been issued yet.")
+    else:
+        db_cursor.execute(
+            f'UPDATE books SET issueStatus = "not issued" WHERE bookId = {book_id}'
+        )
+        db_cursor.execute(
+            f"UPDATE issuedbooksdetails SET returnDate = CURRENT_DATE, returnTime = CURRENT_TIME WHERE bookId = {book_id} AND userId = {user_id}"
+        )
+        db_con.commit()
+        db_cursor.execute(
+            f"SELECT issueDate, returnDate FROM issuedbooksdetails WHERE bookId = {book_id} AND userId = {user_id}"
+        )
+        issue_date, return_date = db_cursor.fetchall()[0]
+        date_difference = datetime.strptime(
+            f"{return_date}", "%Y-%m-%d"
+        ) - datetime.strptime(f"{issue_date}", "%Y-%m-%d")
+        # The 14 and 5 are explained in the returnPolicy function.
+        if date_difference.days > 14:
+            fine = (date_difference.days - 14) * 5
+            if fine != 0:
+                db_cursor.execute(
+                    f"UPDATE issuedbooksdetails SET fineInRs = {fine} WHERE bookId = {book_id} and userId = {user_id}"
+                )
+        print("Book returned successfully")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def addAdmin(db_con, db_cursor) -> None:
+    """
+    @brief Adds a admin.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Change Admin")
+    print("\033[3;34m+----------------+\033[0m\n")
+    to_promote = int(input("Enter the user id to promote to admin: "))
+    choice = input("Do you really want to do it: (Y/N)").lower()
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(f"SELECT adminStatus FROM users WHERE userId = {to_promote}")
+    admin_status = db_cursor.fetchall()
+    if not admin_status:
+        print(f"The user with the Id: {to_promote} does not exist.")
+    elif admin_status[0][0] == "admin":
+        print(f"The user with the Id: {to_promote} is already an admin.")
+    elif choice in ["yes", "y"]:
+        db_cursor.execute(f"UPDATE users SET adminStatus = 'admin' WHERE userID = {to_promote}")
+        db_con.commit()
+        print(f"The user with Id: {to_promote} successfully promoted to admin status.")
+    else:
+        print(f"The user with the Id: {to_promote} was not promoted.")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def adminScreen(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief The admin screen displaying all the options for the admin.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printAdminInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            userScreen(login_id, db_con, db_cursor)
+        elif choice == "2":
+            modifyUser(db_con, db_cursor)
+        elif choice == "3":
+            displayUsers(db_cursor)
+        elif choice == "4":
+            searchUsers(db_cursor)
+        elif choice == "5":
+            modifyBook(db_con, db_cursor)
+        elif choice == "6":
+            issueBook(db_con, db_cursor)
+        elif choice == "7":
+            returnBook(db_con, db_cursor)
+        elif choice == "8":
+            addAdmin(db_con, db_cursor)
+        elif choice == "9":
+            break
+        elif choice == "10":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def printUserInterface() -> None:
+    """
+    @brief Print the user screen's interface.
+    """
+    clearScreen()
+    print("\033[3;34m+---------+\033[0m")
+    print("User Screen")
+    print("\033[3;34m+---------+\033[0m\n")
     print("1: About Library")
     print("2: Wikipedia Articles")
     print("3: Display Books")
     print("4: Search Books")
     print("5: Issued Books Details")
-    print("6: Notes")
+    print("6: Access Notes Menu")
     print("7: Back")
     print("8: Exit")
-    print("--------------------------")
+    print("\033[3;34m+---------------------+\033[0m\n")
 
 
-# Function to display information about the library
-def aboutLibrary() -> None:
-    clear_screen()
-    # Retrieve the name of the librarian who is also an admin
-    cursor.execute("SELECT userName FROM users WHERE adminStatus='admin'")
-    username = cursor.fetchall()
-    # Retrieve the total number of books and users in the library
-    cursor.execute("SELECT COUNT(*) FROM books")
-    total_books = cursor.fetchall()
-    cursor.execute("SELECT COUNT(*) FROM users")
-    total_users = cursor.fetchall()
+def aboutLibrary(db_cursor) -> None:
+    """
+    @brief Displays information about the library.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    db_cursor.execute("SELECT userName FROM users WHERE adminStatus = 'admin'")
+    username = db_cursor.fetchall()[0][0]
+    db_cursor.execute("SELECT COUNT(*) FROM books")
+    total_books = db_cursor.fetchall()[0][0]
+    db_cursor.execute("SELECT COUNT(*) FROM users")
+    total_users = db_cursor.fetchall()[0][0]
 
-    print("--------------------------")
+    print("\033[3;34m+-----------+\033[0m")
     print("About Library")
-    print("--------------------------\n")
-    # Display library information
+    print("\033[3;34m+-----------+\033[0m\n")
     print("Year of Library's Establishment : ", 1860)
-    print("Name of the Librarian : ", username[0][0])
-    print("Total Number of Books Available in the Library : ", total_books[0][0])
-    print("Total Number of Users Enrolled in the Library : ", total_users[0][0])
-    print("--------------------------\n")
-    input("Press enter to continue: ")
+    print("Name of the librarian : ", username)
+    print("Total number of books available in the library : ", total_books)
+    print("Total number of users enrolled in the library : ", total_users)
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
 
 
-# Function to search & display the wikipedia articles
 def wikipediaArticles() -> None:
-    clear_screen()
-    print("--------------------------")
+    """
+    @brief Allows the user to search a article on wikipedia based
+    on a specific keyword inputted by the user.
+    """
+    clearScreen()
+    print("\033[3;34m+-------------+\033[0m")
     print("Search Articles")
-    print("--------------------------\n")
-    # Taking user input for the keyword and article length
-    keyword = input("Enter the Keyword for searching the Wikipedia Article: ")
-    print("--------------------------\n")
-    # Creating a Wikipedia API object
+    print("\033[3;34m+-------------+\033[0m\n")
+    keyword = input("Enter the keyword for searching wikipedia article: ")
     wiki = wikipediaapi.Wikipedia(language="en", user_agent="digitallibrary/1.1")
-    # Fetching the page for the given search query
     page = wiki.page(keyword)
-    # Checking if the page exists
+    print("\n\033[3;34m+------------------------+\033[0m")
     if not page.exists():
-        print(
-            f'Sorry, the Wikipedia Article for the keyword "{keyword}" does not exists.'
-        )
+        print(f"Sorry, no wikipedia page for the keyword: '{keyword}' exists.")
     else:
-        # Displaying article title
         print(f"Title: {page.title}")
         print(f"URL: {page.fullurl}")
-        # Displaying a summary of the article within the specified
         print("Summary : ")
         print(page.summary)
-    print("--------------------------\n")
-    input("Press enter to continue: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
 
 
-# Function to display the list of books in the library
-def displayBooks() -> None:
-    clear_screen()
-    print("--------------------------")
+def displayBooks(db_cursor) -> None:
+    """
+    @brief Displays all the books present in the library.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+-----------+\033[0m")
     print("Display Books")
-    print("--------------------------\n")
-    # Retrieve all books from the database
-    cursor.execute(
-        "SELECT bookId, bookName, publicationYear, author, issueStatus FROM books ORDER BY bookId"
+    print("\033[3;34m+-----------+\033[0m\n")
+    fetch_query = (
+        "SELECT bookId, bookName, publicationYear, author, issueStatus FROM books"
     )
-    books = cursor.fetchall()
-    # Display books if available, otherwise notify the user
+    db_cursor.execute(fetch_query)
+    books = db_cursor.fetchall()
     if books:
-        print("Books available in the Digital Library are :")
-        print("--------------------------")
+        print("\033[3;34m+-------------------------------------+\033[0m")
+        print("Books available in the Digital Library:")
+        print("\033[3;34m+-------------------------------------+\033[0m")
         for i, row in enumerate(books):
             print(f"{i + 1}. Book ID : {row[0]}")
             print(f"Book Name : {row[1]}")
             print(f"Publication Year : {row[2]}")
             print(f"Author Name : {row[3]}")
             print(f"Issue Status : {row[4]}")
-            print("--------------------------")
+            print("\033[3;34m+------------------------+\033[0m")
+        print()
     else:
-        # Notify the user if no books are found
+        print("\033[3;34m+------------------------+\033[0m\n")
         print("No books found.")
-        print("--------------------------\n")
-    input("Press enter to continue: ")
+        print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
 
 
-# Function to search books by Book ID
-def searchBooksById() -> None:
-    clear_screen()
-    print("--------------------------")
-    print("Search Book By Id")
-    print("--------------------------\n")
-    # Get user input for Book ID
-    id = int(input("Enter the Book ID to search the Book : "))
-    print("--------------------------")
-    # Execute SQL query to retrieve book information by Book ID
-    cursor.execute(
-        f"SELECT bookId, bookName, publicationYear, author, issueStatus FROM books WHERE bookId = {id}"
+def printSearchBooksInterface() -> None:
+    """
+    @brief Prints the search books interface.
+    """
+    clearScreen()
+    print("\033[3;34m+----------+\033[0m")
+    print("Search Books")
+    print("\033[3;34m+----------+\033[0m\n")
+    print("1: Search by Book ID")
+    print("2: Search by Keyword")
+    print("3: Back")
+    print("4: Exit")
+    print("\033[3;34m+------------------+\033[0m\n")
+
+
+def searchBookById(db_cursor) -> None:
+    """
+    @brief Searches book with the given id.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Search Books By ID")
+    print("\033[3;34m+----------------+\033[0m\n")
+    id = int(input("Enter the bookID to search: "))
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT bookName, publicationYear, author, issueStatus FROM books where bookId = {id}"
     )
-    book = cursor.fetchall()
-    # Display search results if books are found, otherwise notify the user
+    book = db_cursor.fetchall()
     if book:
-        print(f'Book available in the Digital Library with the Book ID "{id}" is :')
-        print("--------------------------")
-        print(f"Book ID : {book[0][0]}")
-        print(f"Book Name : {book[0][1]}")
-        print(f"Publication Year : {book[0][2]}")
-        print(f"Author Name : {book[0][3]}")
-        print(f"Issue Status : {book[0][4]}")
+        print(f"Book available in the Digital Library with the Book ID '{id}' is :")
+        print("\033[3;34m+------------------------+\033[0m")
+        print(f"Book ID : {id}")
+        print(f"Book Name : {book[0][0]}")
+        print(f"Publication Year : {book[0][1]}")
+        print(f"Author Name : {book[0][2]}")
+        print(f"Issue Status : {book[0][3]}")
     else:
         print(f'No book found with the book id "{id}".')
-    print("--------------------------\n")
-    input("Press enter to continue: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
 
 
-# Function to search books by keyword
-def searchBooksByKeyword() -> None:
-    clear_screen()
-    print("--------------------------")
-    print("Search Book By Keyword")
-    print("--------------------------\n")
-    # Get user input for keyword
-    keyword = input("Enter a Keyword to search Books : ")
-    print("--------------------------")
-    # Execute SQL query to retrieve books by keyword
-    cursor.execute(
-        f"SELECT bookId, bookName, publicationYear, author, issueStatus FROM books WHERE bookName LIKE '%{keyword}%' ORDER BY bookId"
+def searchBookByKeyword(db_cursor) -> None:
+    """
+    @brief Searches book with the given keyword.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+---------------------+\033[0m")
+    print("Search Books By Keyword")
+    print("\033[3;34m+---------------------+\033[0m\n")
+    keyword = input("Enter the keyword to search:")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT bookId, bookName, publicationYear, author, issueStatus FROM books WHERE bookName LIKE '%{keyword}%'"
     )
-    books = cursor.fetchall()
-    # Display search results if books are found, otherwise notify the user
+    books = db_cursor.fetchall()
     if books:
         print(
-            f'Books available in the Digital Library with the Keyword "{keyword}" are :'
+            f"Books available in the Digital Library with the Keyword '{keyword}' are :"
         )
-        print("--------------------------")
+        print("\033[3;34m+------------------------+\033[0m")
         for i, row in enumerate(books):
             print(f"{i + 1}. Book ID : {row[0]}")
             print(f"Book Name : {row[1]}")
             print(f"Publication Year : {row[2]}")
             print(f"Author Name : {row[3]}")
             print(f"Issue Status : {row[4]}")
-            print("--------------------------")
+            print("\033[3;34m+------------------------+\033[0m")
         print()
     else:
-        print(f'No books found with the keyword "{keyword}".')
-        print("--------------------------\n")
-    input("Press enter to continue: ")
+        print(f"No book with the keyword: '{keyword}' found.")
+        print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
 
 
-# Function to display search options for books
-def searchBooks() -> None:
-    while True:  # To prompt user to enter again if invalid option.
-        clear_screen()
-        print("--------------------------")
-        print("Search Books")
-        print("--------------------------\n")
-        print("1: Search by Book ID")
-        print("2: Search by Keyword")
-        print("3: Back")
-        choice = int(input("Enter your Choice to Continue : "))
-        # User choices handling
-        if choice == 1:
-            searchBooksById()
-        elif choice == 2:
-            searchBooksByKeyword()
-        elif choice == 3:
-            break
-        else:
-            validOption()
-
-
-# Function to display the issued books details of a user
-def issuedBooksDetails() -> None:
-    clear_screen()
-    print("--------------------------")
-    print("Issued Books Details")
-    print("--------------------------\n")
-    returnPolicy()
-    cursor.execute(
-        f"SELECT bookId, bookName, issueDate, issueTime, returnDate, returnTime, fineInRs FROM issuedbooksdetails WHERE userId={USERID} ORDER BY bookId"
-    )
-    issued_details = cursor.fetchall()
-    if issued_details:
-        for i, row in enumerate(issued_details):
-            print(f"{i +1}. Book ID : ", row[0])
-            print("Book Name : ", row[1])
-            print("Issue Date : ", row[2])
-            print("Issue Time : ", row[3])
-            print("Return Date : ", row[4])
-            print("Return Time : ", row[5])
-            print("Fine(in Rs.) : ", row[6])
-            print("--------------------------")
-        print()
-    else:
-        print("No Books Issued!")
-        print("--------------------------\n")
-    input("Press enter to continue: ")
-
-
-# Function to add note
-def addNote() -> None:
-    clear_screen()
-    print("--------------------------")
-    print("Add Note")
-    print("--------------------------\n")
-    # Get note details from the user
-    number = int(input("Enter the Note Number : "))
-    title = input("Enter the Note Title : ")
-    description = input("Enter the Note Description : ")
-    print("--------------------------\n")
-    cursor.execute(f"SELECT noteNumber FROM notes where userId={USERID}")
-    result = cursor.fetchall()
-    if (number,) in result:
-        print(
-            f'The note of note number "{number}" is already exists in the digital library.'
-        )
-    else:
-        # Execute SQL query to insert the note into the database
-        cursor.execute(
-            f'INSERT INTO notes (userId, noteNumber, noteTitle, noteDescription, updateDate, updateTime) VALUES ({USERID}, {number}, "{title}", "{description}", CURRENT_DATE, CURRENT_TIME)',
-        )
-        mycon.commit()
-        print(f'The note of note number "{number}" is added successfully.')
-    print("--------------------------\n")
-    input("Press enter to continue: ")
-
-
-def print_note_does_not_exist(note_number):
-    print(
-        f'The note of the note number: "{note_number}" does not exists in the digital library.'
-    )
-
-
-# Function to delete a note
-def deleteNote() -> None:
-    clear_screen()
-    print("--------------------------")
-    print("Delete Note")
-    print("--------------------------\n")
-    # Get note number to be deleted from the user
-    number = int(input("Enter the Note Number to Delete the Note: "))
-    choice = input("Are you sure to delete the Note? (Yes): ")
-    print("--------------------------\n")
-    cursor.execute(f"SELECT noteNumber FROM notes where userId={USERID}")
-    result = cursor.fetchall()
-    if choice.lower() in ["yes", "y"]:
-        if (number,) in result:
-            # Execute SQL query to delete the note from the database
-            cursor.execute(
-                "delete FROM notes WHERE userId=%s and noteNumber=%s",
-                (USERID, number),
-            )
-            mycon.commit()
-            print(f'The note of note number "{number}" is deleted successfully.')
-        else:
-            print_note_does_not_exist(number)
-    else:
-        print("--------------------------")
-        print("Note Not Deleted!")
-    print("--------------------------\n")
-    input("Press enter to continue: ")
-
-
-# Function to display the update notes menu and handle user choices
-def updateNotesMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    # Get user choice
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    # Handle user choices
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        updateNotes()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-def update_note_number() -> None:
-    # Update Note Number
-    currentNoteNumber = int(input("Enter the Current Note Number : "))
-    newNoteNumber = int(input("Enter the New Note Number : "))
-    cursor.execute(f"SELECT not")
-    if (currentNoteNumber,) in result:
-        # Update date and time
-        cursor.execute(
-            "update notes set updateDate=CURRENT_DATE where userId=%s and noteNumber=%s",
-            (USERID, currentNoteNumber),
-        )
-        cursor.execute(
-            "update notes set updateTime=CURRENT_TIME where userId=%s and noteNumber=%s",
-            (USERID, currentNoteNumber),
-        )
-        # Update Note Number
-        cursor.execute(
-            "update notes set noteNumber=%s where userId=%s and noteNumber=%s",
-            (newNoteNumber, USERID, currentNoteNumber),
-        )
-        mycon.commit()
-        print("Note Number changed Successfully!")
-        print("--------------------------")
-        updateNotesMenu()
-    else:
-        print_note_does_not_exist(currentNoteNumber)
-
-
-# Function to update a note
-def updateNotes():
-    clear_screen()
-    print("--------------------------")
-    print("Update Notes")
-    print("--------------------------\n")
-    # Display update options
-    print("1. Update the Note Number")
-    print("2. Update the Note Title")
-    print("3. Update the Note Description")
-    print("4. Back")
-    # Get user choice
-    userChoice = int(input("Enter your Choice to Continue : "))
-    print("--------------------------")
-    cursor.execute("SELECT noteNumber FROM notes where userId=%s", (USERID,))
-    result = cursor.fetchall()
-    mycon.commit()
-    # Handle user choices
-    if userChoice == 1:
-        update_note_number()
-    elif userChoice == 2:
-       
-            )
-            # Update Note Title
-            cursor.execute(
-                "update notes set noteTitle=%s where userId=%s and noteNumber=%s",
-                (newTitle, USERID, noteNumber),
-            )
-            mycon.commit()
-            print("Note Title changed Successfully!")
-            print("--------------------------")
-            updateNotesMenu()
-        else:
-            print_note_does_not_exist(noteNumber)
-    elif userChoice == 3:
-        # Update Note Description
-        noteNumber = int(input("Enter the Current Note Number : "))
-        newDescription = input("Enter the New Note Description : ")
-        if (noteNumber,) in result:
-            # Update date and time
-            cursor.execute(
-                "update notes set updateDate=CURRENT_DATE where userId=%s and noteNumber=%s",
-                (USERID, noteNumber),
-            )
-            cursor.execute(
-                "update notes set updateTime=CURRENT_TIME where userId=%s and noteNumber=%s",
-                (USERID, noteNumber),
-            )
-            # Update Note Description
-            cursor.execute(
-                "update notes set noteDescription=%s where userId=%s and noteNumber=%s",
-                (newDescription, USERID, noteNumber),
-            )
-            mycon.commit()
-            print("Note Description changed successfully!")
-            print("--------------------------")
-            updateNotesMenu()
-        else:
-            print_note_does_not_exist(noteNumber)
-    elif userChoice == 4:
-        return  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Change to break if loop is applied.
-    else:
-        validOption()
-
-
-# Function to handle note modifications
-def modifyNote():
+def searchBooks(db_cursor) -> None:
+    """
+    @brief Allows the user to search book in the library based
+    on user's choices.
+    @param db_cursor The cursor object to the Library database.
+    """
     while True:
-        clear_screen()
-        print("--------------------------")
-        print("Modify Notes")
-        print("--------------------------\n")
-        # Display modification options
-        print("1. Add Note")
-        print("2. Delete Note")
-        print("3. Update Notes")
-        print("4. Back")
-        # Get user choice
-        userChoice = int(input("Enter your Choice to Continue : "))
-        # Handle user choices
-        if userChoice == 1:
-            addNote()
-        elif userChoice == 2:
-            deleteNote()
-        elif userChoice == 3:
-            updateNotes()
-        elif userChoice == 4:
+        printSearchBooksInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            searchBookById(db_cursor)
+        elif choice == "2":
+            searchBookByKeyword(db_cursor)
+        elif choice == "3":
             break
+        elif choice == "4":
+            exitLibrary()
         else:
-            validOption()
+            printInvalidOptionInterface()
 
 
-# Function to display notes
-def displayNotes():
-    clear_screen()
-    print("--------------------------")
-    print("Display Notes")
-    print("--------------------------\n")
-    # Fetch all notes from the database
-    cursor.execute(
-        "SELECT noteNumber, noteTitle, noteDescription, updateDate, updateTime FROM notes ORDER BY noteNumber"
+def printReturnPolicy() -> None:
+    """
+    @brief Prints the return policy to the screen.
+    """
+    print("\033[3;34m+------------------------+\033[0m")
+    print("Return Policy : ")
+    print("The issued book should be returned within 14 days(2 weeks).")
+    print(
+        "If the user kept the issued book for more than 14 days, then the\n\
+        user have to pay ₹5 as fine for each extra day the user kept the issued\n\
+        book."
     )
-    fetched_notes = cursor.fetchall()
-    # Check if there are notes available
-    if fetched_notes:
-        print("Notes available in the Digital Library are :")
-        for i, row in enumerate(fetched_notes):
+    print("\033[3;34m+------------------------+\033[0m\n")
+
+
+def issuedBooksDetails(login_id: int, db_cursor) -> None:
+    """
+    @brief Displays details about issued books to the user.
+    @param login_id The login id of the current logged in user.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+-----------+\033[0m")
+    print("Display Books")
+    print("\033[3;34m+-----------+\033[0m\n")
+    printReturnPolicy()
+    fetch_query = f"SELECT bookId, issueDate, issueTime, returnDate, returnTime, fineInRs, bookName FROM issuedbooksdetails WHERE userId = {login_id}"
+    db_cursor.execute(fetch_query)
+    details = db_cursor.fetchall()
+    if details:
+        print(
+            f"Details about the issued notes by the user with login id: {login_id} are:"
+        )
+        print("\033[3;34m+------------------------+\033[0m")
+        for i, row in enumerate(details):
+            print(f"{i + 1}. Book ID : {row[0]}")
+            print(f"Book Name : {row[6]}")
+            print(f"Issue Date : {row[1]}")
+            print(f"Issue Time : {row[2]}")
+            print(f"Return Date : {row[3]}")
+            print(f"Return Time : {row[4]}")
+            print(f"Fine in Rupees : {row[5]}")
+            print("\033[3;34m+------------------------+\033[0m")
+        print()
+    else:
+        print(f"No books are currently issued by the user with login id: {login_id}")
+        print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def printNotesInterface() -> None:
+    """
+    @brief Prints the notes interface.
+    """
+    clearScreen()
+    print("\033[3;34m+---+\033[0m")
+    print("Notes")
+    print("\033[3;34m+---+\033[0m\n")
+    print("1: Add Notes")
+    print("2: Delete Notes")
+    print("3: Update Notes")
+    print("4: Display Notes")
+    print("5: Search Notes")
+    print("6: Back")
+    print("7: Exit")
+    print("\033[3;34m+--------------+\033[0m\n")
+
+
+def addNotes(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief Adds a new note to the notes table in the library database.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+-------+\033[0m")
+    print("Add Notes")
+    print("\033[3;34m+-------+\033[0m\n")
+    number = int(input("Enter the note's number: "))
+    title = input("Enter the note's title: ")
+    desc = input("Enter the note description: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT noteNumber FROM notes WHERE userId = {login_id} AND noteNumber = {number}"
+    )
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        print(
+            f"The note of note number: '{number}' already exists in the digital library, choose another number."
+        )
+    else:
+        db_cursor.execute(
+            f'INSERT INTO notes VALUES({login_id}, {number}, "{title}", "{desc}", CURRENT_DATE, CURRENT_TIME)'
+        )
+        db_con.commit()
+        print(f'The note of note number: "{number}" is added successfully.')
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def deleteNotes(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief Deletes an already existing note from the notes table
+    in the library database.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+----------+\033[0m")
+    print("Delete Notes")
+    print("\033[3;34m+----------+\033[0m\n")
+    number = int(input("Enter the note's number to delete: "))
+    choice = input("Are you sure you want to delete the note? (Y/N): ").lower()
+    print("\033[3;34m+------------------------+\033[0m\n")
+    if choice in ["yes", "y"]:
+        db_cursor.execute(
+            f"SELECT noteNumber FROM notes WHERE userId = {login_id} AND noteNumber = {number}"
+        )
+        # A check to confirm that if the user can perform the action they are trying to do.
+        does_exist = bool(db_cursor.fetchall())
+        if does_exist:
+            db_cursor.execute(
+                f"DELETE FROM notes WHERE userId = {login_id} AND noteNumber = {number}"
+            )
+            db_con.commit()
+            print(f"The note of the note number: {number} deleted successfully.")
+        else:
+            print(f"The note of the note number: {number} does not exist.")
+    else:
+        print("Note not deleted!")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def printUpdateNotesInterface() -> None:
+    """
+    @brief Prints the update notes interface.
+    """
+    clearScreen()
+    print("\033[3;34m+----------+\033[0m")
+    print("Update Notes")
+    print("\033[3;34m+----------+\033[0m\n")
+    print("1: Update Note Number")
+    print("2: Update Note Title")
+    print("3: Update Note Description")
+    print("4: Back")
+    print("5: Exit")
+    print("\033[3;34m+------------------------+\033[0m\n")
+
+
+def updateNoteNumber(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief Updates the note number of a particular note.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+-----------------+\033[0m")
+    print("Update Note Number")
+    print("\033[3;34m+-----------------+\033[0m\n")
+    curr_number = int(input("Enter the note number to update: "))
+    new_number = int(input("Enter the new number to set: "))
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT noteNumber FROM notes WHERE userId = {login_id} AND noteNumber = {curr_number}"
+    )
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f"UPDATE notes\
+            SET updateDate = CURRENT_DATE,\
+            updateTime = CURRENT_TIME,\
+            noteNumber = {new_number}\
+            WHERE userId = {login_id} AND noteNumber = {curr_number}"
+        )
+        db_con.commit()
+        print(f"Note number: {curr_number} successfully changed to: {new_number}")
+    else:
+        print(f"You don't have any note with the number: {curr_number}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateNoteTitle(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief Updates the note title of a particular note.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------+\033[0m")
+    print("Update Note Title")
+    print("\033[3;34m+----------------+\033[0m\n")
+    note_number = int(input("Enter the note number to update: "))
+    new_title = input("Enter the new title to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT noteTitle FROM notes WHERE userId = {login_id} AND noteNumber = {note_number}"
+    )
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f'UPDATE notes\
+            SET updateDate = CURRENT_DATE,\
+            updateTime = CURRENT_TIME,\
+            noteTitle = "{new_title}"\
+            WHERE userId = {login_id} AND noteNumber = {note_number}'
+        )
+        db_con.commit()
+        print(
+            f"Title of note with number: {note_number} successfully changed to: {new_title}"
+        )
+    else:
+        print(f"You don't have any note with the number: {note_number}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateNoteDescription(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief Updates the note description of a particular note.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+----------------------+\033[0m")
+    print("Update Note Description")
+    print("\033[3;34m+----------------------+\033[0m\n")
+    note_number = int(input("Enter the note number to update: "))
+    new_description = input("Enter the new description to set: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT noteDescription FROM notes WHERE userId = {login_id} AND noteNumber = {note_number}"
+    )
+    # A check to confirm that if the user can perform the action they are trying to do.
+    does_exist = bool(db_cursor.fetchall())
+    if does_exist:
+        db_cursor.execute(
+            f'UPDATE notes\
+            SET updateDate = CURRENT_DATE,\
+            updateTime = CURRENT_TIME,\
+            noteDescription = "{new_description}"\
+            WHERE userId = {login_id} AND noteNumber = {note_number}'
+        )
+        db_con.commit()
+        print(
+            f"Description of note with number: {note_number} successfully changed to: {new_description}"
+        )
+    else:
+        print(f"You don't have any note with the number: {note_number}")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press Enter to continue: ")
+
+
+def updateNotes(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief The update notes screen that allows the user to update already existing notes.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printUpdateNotesInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            updateNoteNumber(login_id, db_con, db_cursor)
+        elif choice == "2":
+            updateNoteTitle(login_id, db_con, db_cursor)
+        elif choice == "3":
+            updateNoteDescription(login_id, db_con, db_cursor)
+        elif choice == "4":
+            break
+        elif choice == "5":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def displayNotes(login_id: int, db_cursor) -> None:
+    """
+    @brief Displays the notes made by the user.
+    @param login_id The login id of the current logged in user.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+-----------+\033[0m")
+    print("Display Notes")
+    print("\033[3;34m+-----------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT noteNumber, noteTitle, noteDescription, updateDate, updateTime FROM notes WHERE userId = {login_id}"
+    )
+    fetched = db_cursor.fetchall()
+    if fetched:
+        print("Your available notes are:")
+        for i, row in enumerate(fetched):
             print(f"{i + 1}. Note Number : {row[0]}")
             print(f"Note Title : {row[1]}")
             print(f"Note Description : {row[2]}")
             print(f"Update Date : {row[3]}")
             print(f"Update Time : {row[4]}")
-            print("--------------------------")
+            print("\033[3;34m+------------------------+\033[0m")
         print()
     else:
-        # If no notes are found
-        print("No notes found.")
-        print("--------------------------\n")
+        print("You currently have no notes.")
+        print("\033[3;34m+------------------------+\033[0m\n")
     input("Press enter to continue: ")
 
 
-# Function to display the search notes menu and handle user choices
-def searchNotesMenu():
-    print("1. Home")
-    print("2. Back")
-    print("3. Exit")
-    userChoice = int(input("Enter your Choice to Continue : "))
-    # Handle user choices
-    if userChoice == 1:
-        home()
-    elif userChoice == 2:
-        searchNotes()
-    elif userChoice == 3:
-        exiting()
-    else:
-        validOption()
-
-
-# Function to search notes by note number
-def searchNotesbynoteNumber():
-    # Get the note number to search
-    noteNumber = int(input("Enter the Note Number to search the Note : "))
-    # Execute SQL query to fetch notes with the given note number
-    cursor.execute("SELECT * FROM notes WHERE bookId=%s", (noteNumber,))
-    result = cursor.fetchall()
-    mycon.commit()
-    # Check if notes are found
-    if result:
-        print(
-            f'Note available in the Digital Library with the Note Number "{noteNumber}" is :'
-        )
-        i = 0
-        for row in result:
-            i += 1
-            r = leftpad_calculator(i)
-            print(f"{i}. Note Number : {row[1]}")
-            print(" " * r + f"Note Title : {row[2]}")
-            print(" " * r + f"Note Description : {row[3]}")
-            print("--------------------------")
-            searchNotesMenu()
-    else:
-        # If no notes are found with the given note number
-        print(f'No note found with the note number "{noteNumber}".')
-        print("--------------------------")
-        searchNotesMenu()
-
-
-# Function to search notes by keyword
-def searchNotesbyKeyword():
-    print("--------------------------")
-    print("Search Notes by Keyword")
-    print("--------------------------")
-    # Get keyword from user
-    keyword = input("Enter a Keyword to search Notes : ")
-    # Execute SQL query to fetch notes with the given keyword in the title
-    cursor.execute(
-        "SELECT * FROM notes WHERE noteTitle LIKE '%{}%' ORDER BY noteNumber".format(
-            keyword
-        )
-    )
-    result = cursor.fetchall()
-    mycon.commit()
-    # Check if notes are found
-    if result:
-        print(
-            f'Notes available in the Digital Library with the Keyword "{keyword}" are :'
-        )
-        i = 0
-        for row in result:
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            i += 1
-            r = leftpad_calculator(i)
-            print(f"{i}. Note Number : {row[1]}")
-            print(" " * r + f"Note Title : {row[2]}")
-            print(" " * r + f"Note Description : {row[3]}")
-            print("--------------------------")
-            searchNotesMenu()
-    else:
-        # If no notes are found with the given keyword
-        print(f'No notes found with the keyword "{keyword}".')
-        print("--------------------------")
-        searchNotesMenu()
-
-
-# Function to handle note searching
-def searchNotes():
-    print("--------------------------")
+def printSearchNotesInterface() -> None:
+    """
+    @brief Prints the search notes interface.
+    """
+    clearScreen()
+    print("\033[3;34m+----------+\033[0m")
     print("Search Notes")
-    print("--------------------------")
-    # Display search options
-    print("1. Search by Note Number")
-    print("2. Search by Keyword")
-    print("3. Home")
-    print("4. Back")
-    print("5. Exit")
-    # Get user choice
-    userChoice = int(input("Enter your Choice to Continue : "))
-    # Handle user choices
-    if userChoice == 1:
-        searchNotesbynoteNumber()
-    elif userChoice == 2:
-        searchNotesbyKeyword()
-    elif userChoice == 3:
-        notes()
-    elif userChoice == 4:
-        modifyNote()
-    elif userChoice == 5:
-        exiting()
-    else:
-        validOption()
+    print("\033[3;34m+----------+\033[0m\n")
+    print("1: Search Note By Number")
+    print("2: Search Note By Keyword")
+    print("3: Back")
+    print("4: Exit")
+    print("\033[3;34m+-----------------------+\033[0m\n")
 
 
-# Function to manage notes
-def notes():
-    while True:
-        clear_screen()
-        print("--------------------------")
-        print("Notes")
-        print("--------------------------\n")
-        print("1. Modify Note")
-        print("2. Display Notes")
-        print("3. Search Notes")
-        print("4. Back")
-        # Get user choice
-        userChoice = int(input("Enter your Choice to Continue : "))
-        print("--------------------------")
-        # Handle user choices
-        if userChoice == 1:
-            modifyNote()
-        elif userChoice == 2:
-            displayNotes()
-        elif userChoice == 3:
-            searchNotes()
-        elif userChoice == 4:
-            break
-        else:
-            validOption()
-
-
-# Function to display the user menu
-def user() -> None:
-    while True:
-        clear_screen()
-        print_user_screen()
-        choice = int(input("Enter your choice to Continue : "))
-        # Handle user choices
-        if choice == 1:
-            aboutLibrary()
-        elif choice == 2:
-            wikipediaArticles()
-        elif choice == 3:
-            displayBooks()
-        elif choice == 4:
-            searchBooks()
-        elif choice == 5:
-            issuedBooksDetails()
-        elif choice == 6:
-            notes()
-        elif choice == 7:
-            break
-        elif choice == 8:
-            exiting()
-        else:
-            validOption()
-
-
-def print_home_screen() -> None:
-    print(
-        f"\033[1;31m{pyfiglet.figlet_format("Welcome to the", font="banner3", width=1000)}\n{pyfiglet.figlet_format("Digital Library", font="banner3", width=1000)}\033[0m"
+def searchNoteByNumber(login_id: int, db_cursor) -> None:
+    """
+    @brief Searches a note by the given number.
+    @param login_id The login id of the current logged in user.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+-------------------+\033[0m")
+    print("Search Note By Number")
+    print("\033[3;34m+-------------------+\033[0m\n")
+    number = int(input("Enter the note number to search: "))
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f"SELECT noteTitle, noteDescription, updateDate, updateTime FROM notes WHERE userId = {login_id} AND noteNumber = {number}"
     )
-    print("\n--------------------------")
+    result = db_cursor.fetchall()
+    if result:
+        print(f"Notes available with the number: {number} are: ")
+        print("\033[3;34m+------------------------+\033[0m\n")
+        for i, row in enumerate(result):
+            print(f"{i}. Note Number : {number}")
+            print(f"Note Title : {row[0]}")
+            print(f"Note Description : {row[1]}")
+            print(f"Update Date : {row[2]}")
+            print(f"Update Time : {row[3]}")
+            print("\033[3;34m+------------------------+\033[0m")
+        print()
+    else:
+        print(f"You currently have no notes with the number: {number}.")
+        print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press enter to continue: ")
+
+
+def searchNoteByKeyword(login_id: int, db_cursor) -> None:
+    """
+    @brief Searches a note by the given keyword.
+    @param login_id The login id of the current logged in user.
+    @param db_cursor The cursor object to the Library database.
+    """
+    clearScreen()
+    print("\033[3;34m+--------------------+\033[0m")
+    print("Search Note By Keyword")
+    print("\033[3;34m+--------------------+\033[0m\n")
+    keyword = input("Enter the note keyword to search: ")
+    print("\033[3;34m+------------------------+\033[0m\n")
+    db_cursor.execute(
+        f'SELECT noteNumber, noteTitle, noteDescription, updateDate, updateTime FROM notes WHERE userId = {login_id} AND noteTitle LIKE "%{keyword}%"'
+    )
+    result = db_cursor.fetchall()
+    if result:
+        print(f"Notes available with the keyword: {keyword} are: ")
+        print("\033[3;34m+------------------------+\033[0m\n")
+        for i, row in enumerate(result):
+            print(f"{i}. Note Number : {row[0]}")
+            print(f"Note Title : {row[1]}")
+            print(f"Note Description : {row[2]}")
+            print(f"Update Date : {row[3]}")
+            print(f"Update Time : {row[4]}")
+            print("\033[3;34m+------------------------+\033[0m")
+        print()
+    else:
+        print(f"You currently have no notes with the keyword: {keyword}.")
+        print("\033[3;34m+------------------------+\033[0m\n")
+    input("Press enter to continue: ")
+
+
+def searchNotes(login_id: int, db_cursor) -> None:
+    """
+    @brief The search notes screen that allows the user to search notes
+    through some parameters.
+    @param login_id The login id of the current logged in user.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printSearchNotesInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            searchNoteByNumber(login_id, db_cursor)
+        elif choice == "2":
+            searchNoteByKeyword(login_id, db_cursor)
+        elif choice == "3":
+            break
+        elif choice == "4":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def notes(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief The notes screen allowing user to manage the notes taken by them.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printNotesInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            addNotes(login_id, db_con, db_cursor)
+        elif choice == "2":
+            deleteNotes(login_id, db_con, db_cursor)
+        elif choice == "3":
+            updateNotes(login_id, db_con, db_cursor)
+        elif choice == "4":
+            displayNotes(login_id, db_cursor)
+        elif choice == "5":
+            searchNotes(login_id, db_cursor)
+        elif choice == "6":
+            break
+        elif choice == "7":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def userScreen(login_id: int, db_con, db_cursor) -> None:
+    """
+    @brief The user screen displaying all the options for the admin.
+    @param login_id The login id of the current logged in user.
+    @param db_con The connection object to the Library database.
+    @param db_cursor The cursor object to the Library database.
+    """
+    while True:
+        printUserInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            aboutLibrary(db_cursor)
+        elif choice == "2":
+            wikipediaArticles()
+        elif choice == "3":
+            displayBooks(db_cursor)
+        elif choice == "4":
+            searchBooks(db_cursor)
+        elif choice == "5":
+            issuedBooksDetails(login_id, db_cursor)
+        elif choice == "6":
+            notes(login_id, db_con, db_cursor)
+        elif choice == "7":
+            break
+        elif choice == "8":
+            exitLibrary()
+        else:
+            printInvalidOptionInterface()
+
+
+def printMainInterface() -> None:
+    """
+    @brief Prints the main screen's interface.
+    """
+    clearScreen()
+    print(
+        f"\033[1;34m{pyfiglet.figlet_format("Welcome to the", font="banner3", width=1000)}\n{pyfiglet.figlet_format("Digital Library", font="banner3", width=1000)}\033[0m"
+    )
+    print("\n\033[3;34m+--+\033[0m")
     print("Home")
-    print("--------------------------\n")
+    print("\033[3;34m+--+\033[0m\n")
     print("1: Login")
     print("2: Exit")
-    print("--------------------------")
+    print("\033[3;34m+------+\033[0m")
 
 
-# Function to display the main menu
-def home():
+def loginScreen(db_cursor) -> tuple[int, str]:
+    """
+    @brief Prompts the user to login into their account, also provides error
+    messages and a way to go back if the user doesn't want to login.
+    @param db_cursor The cursor object to the Library database.
+    @return A tuple containing the LoginID and if the user is admin or not.
+    """
     while True:
-        clear_screen()
-        print_home_screen()
-        user_choice = int(input("Enter your Choice to Continue : "))
-        # Handle user choices
-        if user_choice == 1:
-            auth_level = auth_user()
-            if auth_level == 0:
-                user()
-            elif auth_level == 1:
-                admin()
-        elif user_choice == 2:
-            exiting()
+        clearScreen()
+        print("\033[3;34m+----------+\033[0m")
+        print("Login Screen")
+        print("\033[3;34m+----------+\033[0m\n")
+        id = int(input("Enter the login id: "))
+        passwd = input("Enter the password: ")
+        auth_query = f"SELECT adminStatus FROM users WHERE userId = {id} AND password = '{passwd}'"
+
+        db_cursor.execute(auth_query)
+        status = db_cursor.fetchall()
+        if not status:
+            print("\033[3;31m+-------------------------+\033[0m")
+            print("Invalid LoginID or Password")
+            print("\033[3;31m+-------------------------+\033[0m\n")
+            if (
+                input("Press 'X' to go back, any other key to try again: ").lower()
+                == "x"
+            ):
+                return -1, "backed"  # -1 is supposed to signify invalid user id.
+            continue
+        return id, status[0][0]
+
+
+def main() -> None:
+    """
+    @brief The main application loop.
+    """
+    db_con, db_cursor = connectToLibrary()
+    login_id = -1
+    while True:
+        printMainInterface()
+        choice = input("Enter your choice to continue: ")
+        if choice == "1":
+            login_id, access_level = loginScreen(db_cursor)
+            if access_level == "admin":
+                adminScreen(login_id, db_con, db_cursor)
+            elif access_level == "not admin":
+                userScreen(login_id, db_con, db_cursor)
+        elif choice == "2":
+            exitLibrary()
         else:
-            validOption()
-            input("Press enter to continue: ")
+            printInvalidOptionInterface()
 
 
+# If this file is imported somewhere else, this ensures
+# that the home function doesn't get called there.
 if __name__ == "__main__":
-    home()
+    main()
