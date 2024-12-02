@@ -33,24 +33,19 @@ Creation:
         bookId int NOT NULL PRIMARY KEY,
         bookName varchar(50) NOT NULL,
         publicationYear int,
-        issueDate date,
-        issueTime time,
-        returnDate date,
-        returnTime time,
         author varchar(40),
         issueStatus varchar(10) NOT NULL DEFAULT 'not issued',
-        issueUserId int,
-        FOREIGN KEY (issueUserId) REFERENCES users(userId)
     );
 
 Values:
     INSERT INTO books
-    VALUES (3000, 'English', 2005, NULL, NULL, NULL, NULL, 'Sman', "not issued", NULL),
-           (4000, 'Hindi', 2011, NULL, NULL, NULL, NULL, 'Rman', "not issued", NULL),
-           (5000, 'History', 2010, NULL, NULL, NULL, NULL, NULL, "not issued", NULL),
-           (5263, 'physics', 2003, '2023-12-14', '14:31:21', NULL, NULL, "H.C. Verma", 'issued', 1025),
-           (5658, 'cs', 2016, NULL, NULL, NULL, NULL, "Sumita Arora", "not issued", NULL)
-           12305, 'mathematics', 2011, NULL, NULL, NULL, NULL, "V.V. Acharya", "not issued", NULL);
+    VALUES (3000, 'English', 2005, NULL, 'not issued'),
+           (4000, 'Hindi', 2011, NULL, 'not issued'),
+           (5000, 'History', 2010, NULL, 'not issued'),
+           (5263, 'physics', 2003, 'H.C. Verma', 'issued'),
+           (5658, 'cs', 2016, 'Sumita Arora', 'not issued'),
+           (12305, 'mathematics', 2011, 'V.V. Acharya', 'not issued');
+
 
 
 Notes Table:
@@ -59,7 +54,9 @@ Notes Table:
 Creation:
     CREATE TABLE notes (
         userId int NOT NULL,
-        FOREIGN KEY (userId) REFERENCES users(userId),
+        FOREIGN KEY (userId) REFERENCES users(userId)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
         noteNumber int NOT NULL,
         noteTitle varchar(50),
         noteDescription varchar(10000),
@@ -80,8 +77,12 @@ Creation:
     CREATE TABLE issuedbooksdetails (
         userId int NOT NULL,
         bookId int NOT NULL,
-        FOREIGN KEY (userId) REFERENCES users(userId),
-        FOREIGN KEY (bookId) REFERENCES books(bookId),
+        FOREIGN KEY (userId) REFERENCES users(userId)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+        FOREIGN KEY (bookId) REFERENCES books(bookId)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
         bookName varchar(50) NOT NULL,
         issueDate date,
         issueTime time,
@@ -92,7 +93,7 @@ Creation:
 
 Values:
     INSERT INTO issuedbooksdetails
-    VALUES (1025, 5263, 'physics', '2023-12-14', '14:31:21', NULL, NULL, 0),
-           (1023, 5658, 'cs', '2023-12-14', '14:31:53', '2023-12-14', '14:32:04', 0),
-           (1023, 12305, 'mathematics', '2023-12-14', '14:32:28', '2023-12-14', '14:32:34', 0);
+    VALUES (1025, 5263, '2023-12-14', '14:31:21', NULL, NULL, 0, 'physics'),
+           (1023, 5658, '2023-12-14', '14:31:53', '2023-12-14', '14:32:04', 0, 'cs'),
+           (1023, 12305, '2023-12-14', '14:32:28', '2023-12-14', '14:32:34', 0, 'mathematics');
 
