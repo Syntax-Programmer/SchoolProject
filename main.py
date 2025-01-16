@@ -13,8 +13,8 @@ def connectToLibrary():
     """
     con = mysql.connector.connect(
         host="localhost",
-        user="anand_maurya",
-        password="ANAND6308anand",
+        user="ABHIJOT SINGH",
+        password="ABHI2007",
         database="Library",
         collation="utf8mb4_unicode_520_ci",
     )
